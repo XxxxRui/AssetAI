@@ -1,6 +1,52 @@
+import { useState } from "react";
 import AuthLayout from "../components/layout/AuthLayout";
 
-function PasswordSetupPage() {
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
+
+function PasswordSetupPage({ token, onPasswordSetSuccess, onBackToLogin }) {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSetPassword = async () => {
+    setErrorMessage("");
+
+    if (!token) {
+      setErrorMessage("Session missing. Please sign in again.");
+      return;
+    }
+    if (!newPassword || !confirmPassword) {
+      setErrorMessage("Please fill in both password fields.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/set-initial-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newPassword }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message || "Failed to set password.");
+      }
+      onPasswordSetSuccess();
+    } catch (error) {
+      setErrorMessage(error.message || "Unable to set password.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const leftContent = (
     <div className="setup-left-content">
       <div className="brand">AssetGuard AI</div>
@@ -48,7 +94,12 @@ function PasswordSetupPage() {
         <div className="form-group boxed">
           <label>NEW PASSWORD</label>
           <div className="password-box">
-            <input type="password" placeholder="••••••••••••" />
+            <input
+              type="password"
+              placeholder="••••••••••••"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
             <span className="eye">◉</span>
           </div>
         </div>
@@ -56,7 +107,12 @@ function PasswordSetupPage() {
         <div className="form-group boxed">
           <label>CONFIRM PASSWORD</label>
           <div className="password-box">
-            <input type="password" placeholder="••••••••••••" />
+            <input
+              type="password"
+              placeholder="••••••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
           </div>
         </div>
 
@@ -71,8 +127,22 @@ function PasswordSetupPage() {
           </ul>
         </div>
 
-        <button type="button" className="primary-btn">
-          Initialize Secure Access <span>→</span>
+        {errorMessage && (
+          <p style={{ color: "#f87171", marginTop: "0", marginBottom: "8px" }}>
+            {errorMessage}
+          </p>
+        )}
+
+        <button
+          type="button"
+          className="primary-btn"
+          onClick={handleSetPassword}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Saving..." : "Initialize Secure Access"} <span>→</span>
+        </button>
+        <button type="button" className="primary-btn" onClick={onBackToLogin}>
+          Back to Login
         </button>
       </div>
 

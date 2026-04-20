@@ -1,7 +1,46 @@
+import { useState } from "react";
 import AuthLayout from "../components/layout/AuthLayout";
 import buildingImage from "../assets/building.png";
 
-function LoginEmailPage() {
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
+
+function LoginEmailPage({ onLoginSuccess }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setErrorMessage("");
+
+    if (!email.trim() || !password) {
+      setErrorMessage("Please enter both email and password.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message || "Login failed.");
+      }
+      onLoginSuccess(payload.data);
+    } catch (error) {
+      setErrorMessage(error.message || "Unable to sign in.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const leftContent = (
     <div className="login-hero">
       <div className="brand">AssetGuard AI</div>
@@ -30,19 +69,35 @@ function LoginEmailPage() {
       <p className="eyebrow">WELCOME BACK</p>
       <h2 className="form-title">Sign in to your dashboard</h2>
 
-      <form className="auth-form">
+      <form className="auth-form" onSubmit={handleSubmit}>
         <div className="form-group">
           <label>CORPORATE EMAIL</label>
-          <input type="email" placeholder="john.doe@company.com" />
+          <input
+            type="email"
+            placeholder="john.doe@company.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
 
         <div className="form-group">
           <label>SECURE PASSWORD</label>
-          <input type="password" placeholder="••••••••" />
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
 
-        <button type="button" className="primary-btn">
-          Sign In <span>→</span>
+        {errorMessage && (
+          <p style={{ color: "#f87171", marginTop: "-4px", marginBottom: "8px" }}>
+            {errorMessage}
+          </p>
+        )}
+
+        <button type="submit" className="primary-btn" disabled={isSubmitting}>
+          {isSubmitting ? "Signing In..." : "Sign In"} <span>→</span>
         </button>
       </form>
 
