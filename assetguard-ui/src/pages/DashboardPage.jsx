@@ -1,3 +1,4 @@
+import { useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import DashboardHeader from "../components/dashboard/DashboardHeader";
 import StatCard from "../components/dashboard/StatCard";
@@ -17,9 +18,34 @@ const assetList = [
   ["Data Center Rack A1-12", "CloudHorizon", "32 kW", "Yesterday"],
 ];
 
+const navDescriptions = {
+  Evaluation: "Create and review load evaluations for selected assets.",
+  Assets: "Browse and manage registered assets and their load capacities.",
+  History: "Review previous evaluation records and outcomes.",
+  Alerts: "Monitor warning signals and non-compliance notifications.",
+  Admin: "Manage users, roles, and system-level settings.",
+};
+
 function DashboardPage() {
+  const [activeNav, setActiveNav] = useState("Dashboard");
+
+  if (activeNav !== "Dashboard") {
+    return (
+      <AppLayout activeNav={activeNav} onNavChange={setActiveNav}>
+        <section className="module-placeholder">
+          <h1>{activeNav}</h1>
+          <p>{navDescriptions[activeNav]}</p>
+          <p className="muted-note">
+            This module is now selectable from the sidebar. Detailed screens can be
+            implemented next.
+          </p>
+        </section>
+      </AppLayout>
+    );
+  }
+
   return (
-    <AppLayout>
+    <AppLayout activeNav={activeNav} onNavChange={setActiveNav}>
       <DashboardHeader />
 
       <section className="stats-grid">
