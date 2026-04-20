@@ -26,12 +26,12 @@ const navDescriptions = {
   Admin: "Manage users, roles, and system-level settings.",
 };
 
-function DashboardPage() {
+function DashboardPage({ user }) {
   const [activeNav, setActiveNav] = useState("Dashboard");
 
   if (activeNav !== "Dashboard") {
     return (
-      <AppLayout activeNav={activeNav} onNavChange={setActiveNav}>
+      <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user}>
         <section className="module-placeholder">
           <h1>{activeNav}</h1>
           <p>{navDescriptions[activeNav]}</p>
@@ -45,7 +45,7 @@ function DashboardPage() {
   }
 
   return (
-    <AppLayout activeNav={activeNav} onNavChange={setActiveNav}>
+    <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user}>
       <DashboardHeader />
 
       <section className="stats-grid">
