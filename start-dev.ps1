@@ -40,19 +40,27 @@ Write-Host 'Python executable path:' (Resolve-Path $pyExe) -ForegroundColor Gree
 Write-Host 'Ensuring backend dependencies from requirements.txt ...' -ForegroundColor Cyan
 & $pyExe -m pip install -r requirements.txt
 
+$bootstrapMarker = '.dev_bootstrap_done'
+$dbPath = '.\instance\assetguard.db'
+$dbExistedBeforeUpgrade = Test-Path $dbPath
+$markerExists = Test-Path $bootstrapMarker
+
 Write-Host 'Running database migrations: flask db upgrade ...' -ForegroundColor Cyan
 & $pyExe -m flask --app assetguard_app.py db upgrade
 
-$bootstrapMarker = '.dev_bootstrap_done'
-if (-not (Test-Path $bootstrapMarker)) {
-    Write-Host '[First-time] Bootstrap marker missing. Running flask seed ...' -ForegroundColor Yellow
+if (-not $markerExists -or -not $dbExistedBeforeUpgrade) {
+    if (-not $dbExistedBeforeUpgrade) {
+        Write-Host "[Bootstrap] Database file was missing before startup ($dbPath). Running flask seed ..." -ForegroundColor Yellow
+    } elseif (-not $markerExists) {
+        Write-Host '[First-time] Bootstrap marker missing. Running flask seed ...' -ForegroundColor Yellow
+    }
     & $pyExe -m flask --app assetguard_app.py seed
     if ($LASTEXITCODE -eq 0) {
         New-Item -ItemType File -Path $bootstrapMarker -Force | Out-Null
         Write-Host '[First-time] Bootstrap completed. Marker file created.' -ForegroundColor Green
     }
 } else {
-    Write-Host '[Normal] Bootstrap marker found. Skip flask seed.' -ForegroundColor Green
+    Write-Host '[Normal] Bootstrap marker found and database existed before startup. Skip flask seed.' -ForegroundColor Green
 }
 
 Write-Host 'Starting backend server on http://127.0.0.1:5000 ...' -ForegroundColor Cyan
