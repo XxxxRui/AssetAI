@@ -4,6 +4,11 @@ import DashboardHeader from "../components/dashboard/DashboardHeader";
 import StatCard from "../components/dashboard/StatCard";
 import SectionHeader from "../components/dashboard/SectionHeader";
 import DataTable from "../components/dashboard/DataTable";
+import EvaluationPage from "./EvaluationPage";
+import AssetsPage from "./AssetsPage";
+import HistoryPage from "./HistoryPage";
+import AdminUsersPage from "./AdminUsersPage";
+import AdminLocationPage from "./AdminLocationPage";
 import AlertsPage from "./AlertsPage";
 
 const recentEvaluations = [
@@ -30,21 +35,45 @@ const navDescriptions = {
 function DashboardPage({ user }) {
   const [activeNav, setActiveNav] = useState("Dashboard");
 
+  if (activeNav === "Evaluation") {
+    return <EvaluationPage user={user} onNavChange={setActiveNav} />;
+  }
+
+  if (activeNav === "Assets") {
+    return <AssetsPage user={user} onNavChange={setActiveNav} />;
+  }
+
+  if (activeNav === "History") {
+    return <HistoryPage user={user} onNavChange={setActiveNav} />;
+  }
+
+  if (activeNav === "Admin/User") {
+    return <AdminUsersPage user={user} onNavChange={setActiveNav} />;
+  }
+
+  if (activeNav === "Admin/Location") {
+    return <AdminLocationPage user={user} onNavChange={setActiveNav} />;
+  }
+
+  if (activeNav === "Alerts") {
+  return (
+    <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user}>
+      <AlertsPage />
+    </AppLayout>
+  );
+}
+
   if (activeNav !== "Dashboard") {
     return (
       <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user}>
-         {activeNav === "Alerts" ? (
-          <AlertsPage />
-        ) : (
-          <section className="module-placeholder">
-            <h1>{activeNav}</h1>
-            <p>{navDescriptions[activeNav]}</p>
-            <p className="muted-note">
-              This module is now selectable from the sidebar. Detailed screens can be
-              implemented next.
-            </p>
-          </section>
-        )}
+        <section className="module-placeholder">
+          <h1>{activeNav}</h1>
+          <p>{navDescriptions[activeNav]}</p>
+          <p className="muted-note">
+            This module is now selectable from the sidebar. Detailed screens can be
+            implemented next.
+          </p>
+        </section>
       </AppLayout>
     );
   }
