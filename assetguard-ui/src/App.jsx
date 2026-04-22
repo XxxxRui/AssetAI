@@ -38,7 +38,7 @@ function App() {
           onBackToLogin={handleLogout}
         />
       )}
-      {currentPage === "dashboard" && <DashboardPage user={user} />}
+      {currentPage === "dashboard" && <DashboardPage user={user} onLogout={handleLogout} />}
     </>
   );
 }
