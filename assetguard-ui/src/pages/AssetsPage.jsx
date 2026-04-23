@@ -19,53 +19,87 @@ function AssetsPage({ user, onNavChange }) {
     }
   };
 
-  // Sample assets data - In production, this would come from the API
+  // Sample assets data - Matches database structure
+  // Asset fields: ID, Location ID, Name
+  // Load Capacity fields: ID, Asset ID, Name, Metric, Max Load, Details
   const assetsData = [
     {
       id: 1,
-      name: "Titan-X Generator 400",
-      organization: "OmniCorp Industrial",
-      maxLoad: "12,500 kg",
-      updateTime: "24 Oct 2023, 14:32",
-      status: "compliant",
+      locationId: 1,
+      locationName: "Port of Bunbury",
+      name: "Berth 2",
+      loadCapacities: [
+        { name: "max point load", metric: "kN", maxLoad: 1000 },
+        { name: "max axle load", metric: "t", maxLoad: 87.4 },
+        { name: "max uniform distributor load", metric: "kPa", maxLoad: 40 },
+        { name: "max displacement size", metric: "t", maxLoad: 68100 },
+      ],
     },
     {
       id: 2,
-      name: "Atlas Crane v2.1",
-      organization: "Skyline Logistics",
-      maxLoad: "45,000 kg",
-      updateTime: "23 Oct 2023, 09:15",
-      status: "compliant",
+      locationId: 1,
+      locationName: "Port of Bunbury",
+      name: "Berth 3",
+      loadCapacities: [
+        { name: "max point load", metric: "kN", maxLoad: 1200 },
+        { name: "max axle load", metric: "t", maxLoad: 90 },
+        { name: "max uniform distributor load", metric: "kPa", maxLoad: 42 },
+        { name: "max displacement size", metric: "t", maxLoad: 70000 },
+      ],
     },
     {
       id: 3,
-      name: "Centrifuge Unit 7",
-      organization: "BioLab Systems",
-      maxLoad: "250 kg",
-      updateTime: "22 Oct 2023, 18:45",
-      status: "non-compliant",
+      locationId: 1,
+      locationName: "Port of Bunbury",
+      name: "Berth 5",
+      loadCapacities: [
+        { name: "max point load", metric: "kN", maxLoad: 1000 },
+        { name: "max axle load", metric: "t", maxLoad: 87.4 },
+        { name: "max uniform distributor load", metric: "kPa", maxLoad: 40 },
+        { name: "max displacement size", metric: "t", maxLoad: 68100 },
+      ],
     },
     {
       id: 4,
-      name: "Hydraulic Press PX-9",
-      organization: "MetalForge Co.",
-      maxLoad: "8,000 kg",
-      updateTime: "21 Oct 2023, 11:20",
-      status: "compliant",
+      locationId: 1,
+      locationName: "Port of Bunbury",
+      name: "Berth 8",
+      loadCapacities: [
+        { name: "max point load", metric: "kN", maxLoad: 2642 },
+        { name: "max axle load", metric: "t", maxLoad: 87.4 },
+        { name: "max uniform distributor load", metric: "kPa", maxLoad: 40 },
+        { name: "max displacement size", metric: "t", maxLoad: 72000 },
+      ],
     },
     {
       id: 5,
-      name: "Conveyor System Alpha",
-      organization: "Global Distribution",
-      maxLoad: "1,200 kg",
-      updateTime: "20 Oct 2023, 16:55",
-      status: "compliant",
+      locationId: 1,
+      locationName: "Port of Bunbury",
+      name: "Berth 9",
+      loadCapacities: [
+        { name: "max point load", metric: "kN", maxLoad: 1500 },
+        { name: "max axle load", metric: "t", maxLoad: 88 },
+        { name: "max uniform distributor load", metric: "kPa", maxLoad: 41 },
+        { name: "max displacement size", metric: "t", maxLoad: 69000 },
+      ],
+    },
+    {
+      id: 6,
+      locationId: 1,
+      locationName: "Port of Bunbury",
+      name: "Hardstand A",
+      loadCapacities: [
+        { name: "max point load", metric: "kN", maxLoad: 800 },
+        { name: "max axle load", metric: "t", maxLoad: 85 },
+        { name: "max uniform distributor load", metric: "kPa", maxLoad: 38 },
+        { name: "max displacement size", metric: "t", maxLoad: 65000 },
+      ],
     },
   ];
 
   const filteredAssets = assetsData.filter((asset) =>
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.organization.toLowerCase().includes(searchTerm.toLowerCase())
+    asset.locationName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleBatchImport = () => {
@@ -140,48 +174,44 @@ function AssetsPage({ user, onNavChange }) {
             <thead>
               <tr className="table-header-row">
                 <th className="table-cell table-header-cell">Asset Name</th>
-                <th className="table-cell table-header-cell">Organisation</th>
-                <th className="table-cell table-header-cell">Max Load Capacity</th>
-                <th className="table-cell table-header-cell">Update Time</th>
+                <th className="table-cell table-header-cell">Location</th>
+                <th className="table-cell table-header-cell">Max Point Load</th>
                 <th className="table-cell table-header-cell table-actions-cell">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
-              {filteredAssets.map((asset) => (
-                <tr key={asset.id} className="table-body-row">
-                  <td className="table-cell table-data-cell">
-                    <div className="asset-name-cell">
-                      <div
-                        className="status-indicator"
-                        style={{
-                          backgroundColor: getStatusIndicatorColor(asset.status),
-                        }}
-                      />
-                      <span className="asset-name">{asset.name}</span>
-                    </div>
-                  </td>
-                  <td className="table-cell table-data-cell">
-                    <span className="organization">{asset.organization}</span>
-                  </td>
-                  <td className="table-cell table-data-cell">
-                    <span className="max-load">{asset.maxLoad}</span>
-                  </td>
-                  <td className="table-cell table-data-cell">
-                    <span className="update-time">{asset.updateTime}</span>
-                  </td>
-                  <td className="table-cell table-data-cell table-actions-cell">
-                    <button
-                      className="action-button"
-                      onClick={() => handleAssetAction(asset.id)}
-                      title="More actions"
-                    >
-                      ⋮
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filteredAssets.map((asset) => {
+                const maxPointLoad = asset.loadCapacities.find(lc => lc.name === "max point load");
+                return (
+                  <tr key={asset.id} className="table-body-row">
+                    <td className="table-cell table-data-cell">
+                      <div className="asset-name-cell">
+                        <div className="status-indicator" style={{ backgroundColor: "#006767" }} />
+                        <span className="asset-name">{asset.name}</span>
+                      </div>
+                    </td>
+                    <td className="table-cell table-data-cell">
+                      <span className="organization">{asset.locationName}</span>
+                    </td>
+                    <td className="table-cell table-data-cell">
+                      <span className="max-load">
+                        {maxPointLoad ? `${maxPointLoad.maxLoad} ${maxPointLoad.metric}` : "N/A"}
+                      </span>
+                    </td>
+                    <td className="table-cell table-data-cell table-actions-cell">
+                      <button
+                        className="action-button"
+                        onClick={() => handleAssetAction(asset.id)}
+                        title="More actions"
+                      >
+                        ⋮
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
