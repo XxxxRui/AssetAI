@@ -31,7 +31,7 @@ const navDescriptions = {
   Admin: "Manage users, roles, and system-level settings.",
 };
 
-function DashboardPage({ user, onLogout }) {
+function DashboardPage({ user }) {
   const [activeNav, setActiveNav] = useState("Dashboard");
 
   if (activeNav === "Evaluation") {
@@ -70,7 +70,7 @@ function DashboardPage({ user, onLogout }) {
   }
 
   return (
-    <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user} onLogout={onLogout}>
+    <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user}>
       <DashboardHeader />
 
       <section className="stats-grid">

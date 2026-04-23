@@ -1,12 +1,12 @@
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
-function AppLayout({ children, activeNav, onNavChange, user, onLogout }) {
+function AppLayout({ children, activeNav, onNavChange, user }) {
   return (
     <div className="app-shell">
       <Sidebar activeItem={activeNav} onSelectItem={onNavChange} />
       <div className="app-main">
-        <Topbar user={user} onLogout={onLogout} />
+        <Topbar user={user} />
         <main className="app-content">{children}</main>
       </div>
     </div>

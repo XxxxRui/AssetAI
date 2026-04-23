@@ -3,8 +3,43 @@ import AppLayout from "../components/layout/AppLayout";
 import "../styles/evaluation.css";
 import imgIndustrialTurbine from "../assets/building.png";
 
+// Data Structure
+const LOCATIONS = [
+  { id: 1, name: "Port of Bunbury" },
+];
+
+const ASSETS_BY_LOCATION = {
+  1: [
+    { id: 1, name: "Berth 2" },
+    { id: 2, name: "Berth 3" },
+    { id: 3, name: "Berth 5" },
+    { id: 4, name: "Berth 8" },
+    { id: 5, name: "Berth 9" },
+    { id: 6, name: "Hardstand A" },
+  ],
+};
+
+const EQUIPMENT_OPTIONS = [
+  "Crane with outriggers",
+  "Mobile crane",
+  "Heavy vehicle",
+  "Elevated Work Platform",
+  "Storage Load",
+  "Vessel",
+];
+
+const LOAD_PARAMETER_MAPPING = {
+  "Crane with outriggers": { label: "Max Outrigger Load", metric: "kN" },
+  "Mobile crane": { label: "Max Axle Load", metric: "t" },
+  "Heavy vehicle": { label: "Max Axle Load", metric: "t" },
+  "Elevated Work Platform": { label: "Max Wheel Load", metric: "kN" },
+  "Storage Load": { label: "Uniform Distributor Load", metric: "kPa" },
+  "Vessel": { label: "Displacement", metric: "t" },
+};
+
 function EvaluationPage({ user, onNavChange }) {
   const [activeNav, setActiveNav] = useState("Evaluation");
+  const [showResult, setShowResult] = useState(false);
 
   // Handle nav changes
   const handleNavChange = (newNav) => {
@@ -14,12 +49,14 @@ function EvaluationPage({ user, onNavChange }) {
       setActiveNav(newNav);
     }
   };
+
   const [formData, setFormData] = useState({
-    assetSelection: "Turbine Unit Alpha-7",
-    equipmentType: "Rotary Propulsion",
-    plannedLoad: "8500",
-    unit: "RPM (Revolutions)",
-    description: "Standard quarterly stress test under peak seasonal thermal variance.",
+    location: "",
+    asset: "",
+    equipment: "",
+    equipmentModel: "",
+    loadParameter: "",
+    detailedDescription: "",
   });
 
   const [evaluationResult, setEvaluationResult] = useState({
@@ -40,10 +77,39 @@ function EvaluationPage({ user, onNavChange }) {
     }));
   };
 
+  const handleLocationChange = (e) => {
+    const locationId = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      location: locationId,
+      asset: "", // Reset asset when location changes
+    }));
+  };
+
+  const handleEquipmentChange = (e) => {
+    const equipment = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      equipment,
+      loadParameter: "", // Reset load parameter when equipment changes
+    }));
+  };
+
   const handleEvaluate = () => {
     // API call would go here
     console.log("Evaluating with:", formData);
+    setShowResult(true);
   };
+
+  // Get available assets based on selected location
+  const availableAssets = formData.location 
+    ? ASSETS_BY_LOCATION[formData.location] || [] 
+    : [];
+
+  // Get load parameter info based on selected equipment
+  const loadParameterInfo = formData.equipment 
+    ? LOAD_PARAMETER_MAPPING[formData.equipment] 
+    : null;
 
   return (
     <AppLayout activeNav={activeNav} onNavChange={handleNavChange} user={user}>
@@ -64,74 +130,111 @@ function EvaluationPage({ user, onNavChange }) {
         <div className="evaluation-content">
           {/* Input Form Section */}
           <div className="input-form-section">
-            <div className="form-grid">
-              {/* Asset Selection */}
-              <div className="form-group form-group-asset">
-                <label className="form-label">ASSET SELECTION</label>
+            <div className="form-grid-layout">
+              {/* Row 1: Location & Asset */}
+              <div className="form-group form-group-col-1">
+                <label className="form-label">LOCATION</label>
                 <div className="select-wrapper">
                   <select
-                    name="assetSelection"
-                    value={formData.assetSelection}
-                    onChange={handleInputChange}
+                    name="location"
+                    value={formData.location}
+                    onChange={handleLocationChange}
                     className="form-select"
                   >
-                    <option>Turbine Unit Alpha-7</option>
-                    <option>Turbine Unit Beta-3</option>
+                    <option value="">Select a Location</option>
+                    {LOCATIONS.map(loc => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </option>
+                    ))}
                   </select>
                   <span className="select-icon">▼</span>
                 </div>
               </div>
 
-              {/* Equipment Type */}
-              <div className="form-group">
-                <label className="form-label">EQUIPMENT TYPE</label>
-                <input
-                  type="text"
-                  name="equipmentType"
-                  value={formData.equipmentType}
-                  onChange={handleInputChange}
-                  className="form-input"
-                />
-              </div>
-
-              {/* Planned Load */}
-              <div className="form-group">
-                <label className="form-label">PLANNED LOAD</label>
-                <input
-                  type="text"
-                  name="plannedLoad"
-                  value={formData.plannedLoad}
-                  onChange={handleInputChange}
-                  className="form-input"
-                />
-              </div>
-
-              {/* Unit */}
-              <div className="form-group form-group-unit">
-                <label className="form-label">UNIT</label>
+              <div className="form-group form-group-col-2">
+                <label className="form-label">ASSET</label>
                 <div className="select-wrapper">
                   <select
-                    name="unit"
-                    value={formData.unit}
+                    name="asset"
+                    value={formData.asset}
                     onChange={handleInputChange}
                     className="form-select"
+                    disabled={!formData.location}
                   >
-                    <option>RPM (Revolutions)</option>
-                    <option>PSI (Pressure)</option>
+                    <option value="">Select an Asset</option>
+                    {availableAssets.map(asset => (
+                      <option key={asset.id} value={asset.id}>
+                        {asset.name}
+                      </option>
+                    ))}
                   </select>
                   <span className="select-icon">▼</span>
                 </div>
               </div>
 
-              {/* Detailed Description */}
-              <div className="form-group form-group-description">
+              {/* Row 2: Equipment, Equipment Model, Load Parameter */}
+              <div className="form-group form-group-col-1">
+                <label className="form-label">EQUIPMENT</label>
+                <div className="select-wrapper">
+                  <select
+                    name="equipment"
+                    value={formData.equipment}
+                    onChange={handleEquipmentChange}
+                    className="form-select"
+                  >
+                    <option value="">Select Equipment</option>
+                    {EQUIPMENT_OPTIONS.map(eq => (
+                      <option key={eq} value={eq}>
+                        {eq}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="select-icon">▼</span>
+                </div>
+              </div>
+
+              <div className="form-group form-group-col-2">
+                <label className="form-label">EQUIPMENT MODEL</label>
+                <input
+                  type="text"
+                  name="equipmentModel"
+                  value={formData.equipmentModel}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="Enter equipment model details"
+                />
+              </div>
+
+              {loadParameterInfo && (
+                <div className="form-group form-group-col-3">
+                  <label className="form-label">
+                    {loadParameterInfo.label.toUpperCase()}
+                  </label>
+                  <div className="load-parameter-input-group">
+                    <input
+                      type="number"
+                      name="loadParameter"
+                      value={formData.loadParameter}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      placeholder="Enter value"
+                    />
+                    <span className="load-parameter-metric">{loadParameterInfo.metric}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Row 3: Detailed Description */}
+              <div className="form-group form-group-full-width">
                 <label className="form-label">DETAILED DESCRIPTION</label>
-                <input
-                  type="text"
-                  name="description"
-                  value={formData.description}
+                <textarea
+                  name="detailedDescription"
+                  value={formData.detailedDescription}
                   onChange={handleInputChange}
-                  className="form-input"
+                  className="form-textarea"
+                  placeholder="Enter detailed description about the evaluation"
+                  rows="4"
                 />
               </div>
             </div>
@@ -145,6 +248,7 @@ function EvaluationPage({ user, onNavChange }) {
           </div>
 
           {/* Evaluation Result Section */}
+          {showResult && (
           <div className="evaluation-result-section">
             <div className="result-header">
               <h2 className="result-title">Evaluation Result</h2>
@@ -214,6 +318,7 @@ function EvaluationPage({ user, onNavChange }) {
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
     </AppLayout>
