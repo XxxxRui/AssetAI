@@ -1,8 +1,8 @@
 /* History Page Styles */
 
 .history-container {
-  padding: 40px;
-  max-width: 1400px;
+  padding: 48px 32px 40px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -10,7 +10,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 32px;
+  margin-bottom: 48px;
   gap: 32px;
 }
 
@@ -23,21 +23,21 @@
 
 .header-title {
   font-family: 'Montserrat', sans-serif;
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: -0.75px;
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.9px;
   color: #1b1b1b;
   margin: 0;
-  line-height: 36px;
+  line-height: 40px;
 }
 
 .header-description {
   font-family: 'Quicksand', sans-serif;
   font-size: 16px;
   font-weight: 500;
-  color: #3d4949;
+  color: #64748b;
   margin: 0;
-  line-height: 24px;
+  line-height: 26px;
   max-width: 512px;
 }
 
@@ -125,12 +125,11 @@
 
 /* History Table Container */
 .history-table-container {
-  background: white;
+  background: #f5f3f3;
   border-radius: 8px;
   overflow-x: auto;
   overflow-y: hidden;
   margin-bottom: 32px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -171,7 +170,7 @@
   text-transform: uppercase;
   color: #6d7979;
   text-align: left;
-  padding: 23px 24px;
+  padding: 20px 32px;
   vertical-align: middle;
 }
 
@@ -185,7 +184,7 @@
 }
 
 .table-cell {
-  padding: 0;
+  padding: 24px 32px;
   vertical-align: middle;
 }
 

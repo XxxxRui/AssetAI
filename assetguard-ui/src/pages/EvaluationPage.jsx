@@ -115,13 +115,11 @@ function EvaluationPage({ user, onNavChange }) {
     <AppLayout activeNav={activeNav} onNavChange={handleNavChange} user={user}>
       <div className="evaluation-container">
         {/* Page Header */}
-        <div className="evaluation-header">
-          <div className="page-heading">
-            <h1 className="page-title">New Evaluation</h1>
-            <p className="page-description">
-              Initiate a precision diagnostic by selecting the industrial asset and
-              defining load parameters. The AI will verify compliance against
-              current engineering standards.
+        <div className="page-header">
+          <div className="header-left">
+            <h1 className="header-title">New Evaluation</h1>
+            <p className="header-description">
+              The AI will verify compliance against current engineering standards.
             </p>
           </div>
         </div>
@@ -296,7 +294,6 @@ function EvaluationPage({ user, onNavChange }) {
               <div className="model-signature-card">
                 <h3 className="signature-title">Model Signature Match</h3>
                 <div className="signature-content">
-                  <img src={imgIndustrialTurbine} alt="Turbine" className="signature-image" />
                   <p className="signature-text">{evaluationResult.modelMatch}</p>
                 </div>
                 <div className="signature-actions">

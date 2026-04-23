@@ -141,7 +141,7 @@
   background: #f5f3f3;
   border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .assets-table {
@@ -156,23 +156,22 @@
 }
 
 .table-header-cell {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.6px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.55px;
   text-transform: uppercase;
-  color: #3e4949;
+  color: #6d7979;
   text-align: left;
   padding: 20px 32px;
 }
 
 .table-cell {
-  padding: 0;
+  padding: 24px 32px;
   vertical-align: middle;
 }
 
 .table-data-cell {
-  padding: 24px 32px;
   border-top: 1px solid rgba(189, 201, 200, 0.1);
   background: white;
 }

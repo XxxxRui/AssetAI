@@ -6,27 +6,27 @@
   margin: 0 auto;
 }
 
-.evaluation-header {
+.page-header {
   margin-bottom: 48px;
 }
 
-.page-heading {
+.header-left {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.page-title {
+.header-title {
   font-family: 'Montserrat', sans-serif;
   font-size: 36px;
   font-weight: 800;
-  letter-spacing: -1.8px;
+  letter-spacing: -0.9px;
   color: #1b1b1b;
   margin: 0;
   line-height: 40px;
 }
 
-.page-description {
+.header-description {
   font-family: 'Quicksand', sans-serif;
   font-size: 16px;
   font-weight: 500;
