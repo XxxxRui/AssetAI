@@ -72,7 +72,7 @@
   border-radius: 12px;
   padding: 24px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 24px;
   margin-bottom: 32px;
 }
@@ -127,15 +127,35 @@
 .history-table-container {
   background: white;
   border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin-bottom: 32px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  -webkit-overflow-scrolling: touch;
+}
+
+.history-table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.history-table-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.history-table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.history-table-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .history-table {
   width: 100%;
   border-collapse: collapse;
   background: white;
+  min-width: 1200px;
 }
 
 .table-header-row {
