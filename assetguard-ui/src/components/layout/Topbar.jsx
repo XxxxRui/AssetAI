@@ -19,7 +19,7 @@ function Topbar({ user, onLogout }) {
         onMouseEnter={() => setIsDropdownOpen(true)}
         onMouseLeave={() => setIsDropdownOpen(false)}
       >
-        <div className="topbar-user">{userLabel} ▾</div>
+      <div className="topbar-user">{userLabel} ▾</div>
         {isDropdownOpen && (
           <div className="topbar-dropdown">
             <button className="topbar-dropdown-item" onClick={handleLogout}>
