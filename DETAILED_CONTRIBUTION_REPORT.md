@@ -187,8 +187,22 @@ server: {
 Script files: `start-dev.ps1` and `start-dev.bat`.  
 脚本文件：`start-dev.ps1` 和 `start-dev.bat`。  
 
-The script automates venv setup, dependency install, migration, seed, and service startup.  
-脚本自动处理 venv、依赖安装、迁移、seed 和服务启动。  
+The startup script enforces a deterministic bootstrap sequence: venv check, dependency install, DB migration, conditional seed, then service startup.  
+启动脚本实现了固定顺序的启动链路：检查 venv、安装依赖、数据库迁移、按条件 seed、最后启动服务。  
+
+Backend bootstrap executes in this order in `start-dev.ps1`:  
+`start-dev.ps1` 中后端启动顺序如下：  
+
+1. Resolve backend Python executable from `.venv` or `venv`.  
+1. 从 `.venv` 或 `venv` 解析后端 Python 可执行路径。  
+2. Install/verify dependencies from `requirements.txt`.  
+2. 按 `requirements.txt` 安装并校验依赖。  
+3. Run Alembic migration with `flask db upgrade`.  
+3. 通过 `flask db upgrade` 执行 Alembic 迁移。  
+4. Decide whether seed is required using bootstrap marker + DB existence checks.  
+4. 通过 bootstrap marker 与数据库文件存在性判断是否需要 seed。  
+5. Start Flask server on `127.0.0.1:5000`.  
+5. 启动 Flask 服务到 `127.0.0.1:5000`。  
 
 Key backend bootstrap logic is shown below.  
 关键后端启动逻辑如下。  
@@ -205,14 +219,144 @@ if (-not $markerExists -or -not $dbExistedBeforeUpgrade) {
 & $pyExe -m flask --app assetguard_app.py run
 ```
 
+### 5.1.1 How Seed Is Triggered
+### 5.1.1 Seed 触发条件说明
+
+Seed behavior is not unconditional; it is controlled by two runtime checks in `start-dev.ps1`:  
+seed 不是每次都执行；它在 `start-dev.ps1` 中由两个条件控制：  
+
+- `bootstrapMarker`: `.dev_bootstrap_done`  
+- `bootstrapMarker`：`.dev_bootstrap_done`  
+- `dbPath`: `.\instance\assetguard.db` existence before migration  
+- `dbPath`：迁移前 `.\instance\assetguard.db` 是否存在  
+
+Seed runs when either condition is true:  
+当以下任一条件为真时会执行 seed：  
+
+1. Marker file does not exist (first bootstrap state).  
+1. 标记文件不存在（首次引导状态）。  
+2. Database file did not exist before current startup (fresh DB recreation case).  
+2. 当前启动前数据库文件不存在（数据库重建/丢失场景）。  
+
+If both marker exists and DB existed before startup, seed is skipped to avoid unnecessary reseeding.  
+如果标记文件存在且数据库在启动前已存在，则跳过 seed，避免重复灌入。  
+
+Relevant decision block:  
+对应判断代码片段：  
+
+```powershell
+# start-dev.ps1
+$bootstrapMarker = '.dev_bootstrap_done'
+$dbPath = '.\instance\assetguard.db'
+$dbExistedBeforeUpgrade = Test-Path $dbPath
+$markerExists = Test-Path $bootstrapMarker
+
+& $pyExe -m flask --app assetguard_app.py db upgrade
+
+if (-not $markerExists -or -not $dbExistedBeforeUpgrade) {
+    & $pyExe -m flask --app assetguard_app.py seed
+    if ($LASTEXITCODE -eq 0) {
+        New-Item -ItemType File -Path $bootstrapMarker -Force | Out-Null
+    }
+}
+```
+
+### 5.1.2 Bug Case: DB Deleted but Seed Skipped
+### 5.1.2 Bug 场景：删除 DB 后 seed 被错误跳过
+
+I identified and fixed a bootstrap bug in the startup script logic.  
+我定位并修复了启动脚本中的一个引导逻辑 bug。  
+
+Bug symptom: after deleting the DB file under `instance`, re-running startup did not re-seed data.  
+bug 现象：手动删除 `instance` 下数据库文件后，再次运行启动脚本时不会重新灌入 seed 数据。  
+
+The old behavior was marker-only driven: once `.dev_bootstrap_done` existed, seed was always skipped.  
+旧逻辑只依赖 marker：只要 `.dev_bootstrap_done` 存在，就会始终跳过 seed。  
+
+That means deleting DB but keeping marker caused an empty/fresh database without demo data.  
+这会导致“数据库被删但 marker 还在”时，得到一个空/新数据库却不执行 seed。  
+
+#### Old logic (problematic)
+#### 旧逻辑（有缺陷）
+
+```powershell
+# old behavior (conceptual)
+& $pyExe -m flask --app assetguard_app.py db upgrade
+
+$bootstrapMarker = '.dev_bootstrap_done'
+if (-not (Test-Path $bootstrapMarker)) {
+    & $pyExe -m flask --app assetguard_app.py seed
+    New-Item -ItemType File -Path $bootstrapMarker -Force | Out-Null
+} else {
+    # marker exists -> always skip seed
+}
+```
+
+Root cause: marker existence alone cannot represent database state.  
+根因：仅凭 marker 是否存在，无法真实反映数据库当前状态。  
+
+`flask db upgrade` can recreate schema after DB deletion, but it does not populate demo rows.  
+`flask db upgrade` 在数据库被删后只会重建表结构，不会填充演示数据。  
+
+#### Fix strategy
+#### 修复策略
+
+I added a second condition to seed decision: whether DB file existed **before** migration.  
+我在 seed 判定中增加了第二个条件：迁移执行前数据库文件是否存在。  
+
+Seed is now triggered when either:
+现在 seed 在以下任一条件下触发：  
+
+1. Marker is missing (first bootstrap).  
+1. marker 缺失（首次引导）。  
+2. DB file was missing before startup (DB recreated scenario).  
+2. 启动前数据库文件不存在（数据库重建场景）。  
+
+#### Updated logic (fixed)
+#### 修复后逻辑
+
+```powershell
+# start-dev.ps1
+$bootstrapMarker = '.dev_bootstrap_done'
+$dbPath = '.\instance\assetguard.db'
+$dbExistedBeforeUpgrade = Test-Path $dbPath
+$markerExists = Test-Path $bootstrapMarker
+
+& $pyExe -m flask --app assetguard_app.py db upgrade
+
+if (-not $markerExists -or -not $dbExistedBeforeUpgrade) {
+    & $pyExe -m flask --app assetguard_app.py seed
+    if ($LASTEXITCODE -eq 0) {
+        New-Item -ItemType File -Path $bootstrapMarker -Force | Out-Null
+    }
+} else {
+    Write-Host '[Normal] Bootstrap marker found and database existed before startup. Skip flask seed.' -ForegroundColor Green
+}
+```
+
+Result: deleting `instance/assetguard.db` now correctly re-triggers seed on next startup, while normal restarts still avoid redundant reseeding.  
+结果：现在删除 `instance/assetguard.db` 后，下次启动会正确重新 seed；而正常重启仍会避免重复灌数据。  
+
 ### 5.2 Seed Data and Demo Accounts
 ### 5.2 种子数据与演示账号
 
 Seed command file: `AssetGuard AI/app/commands/seed.py`.  
 seed 命令文件：`AssetGuard AI/app/commands/seed.py`。  
 
-Seed includes demo users, locations, assets, load capacities, and sample evaluation logs.  
-seed 包含演示用户、地点、资产、承载能力以及示例评估日志。  
+Seed logic uses an **upsert-style strategy** for users/assets and recreates sample evaluation logs for demo consistency.  
+seed 逻辑对用户/资产采用 **upsert 风格**，并重建示例评估日志以保证演示一致性。  
+
+Specifically, seed prepares:  
+具体而言，seed 会准备：  
+
+- 3 demo users with roles (`System_Admin`, `Asset_Manager`, `Contractors`) and known credentials.  
+- 3 个演示账号（`System_Admin`、`Asset_Manager`、`Contractors`）及固定凭据。  
+- 1 default location (`Port of Bunbury`).  
+- 1 个默认地点（`Port of Bunbury`）。  
+- 6 assets under that location with standardized load capacity rows.  
+- 该地点下 6 个资产及标准化承载能力记录。  
+- Fresh sample `evaluation_logs` records for dashboard/history demo usage.  
+- 刷新的 `evaluation_logs` 示例数据，用于 dashboard/history 演示。  
 
 Default seeded accounts are listed below.  
 默认 seed 账号如下。  
@@ -220,6 +364,27 @@ Default seeded accounts are listed below.
 - `admin@demo.com / admin123` (`System_Admin`)  
 - `manager@demo.com / manager123` (`Asset_Manager`)  
 - `contractor@demo.com / contractor123` (`Contractors`)  
+
+Example of user upsert in seed command:  
+seed 命令中用户 upsert 示例：  
+
+```python
+# AssetGuard AI/app/commands/seed.py
+def upsert_user(email: str, password: str, role: UserRole):
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        user = User(email=email, role=role, is_first_login=False)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        return user, True
+
+    user.role = role
+    user.is_first_login = False
+    user.set_password(password)
+    db.session.commit()
+    return user, False
+```
 
 ---
 
