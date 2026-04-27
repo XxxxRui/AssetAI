@@ -3,7 +3,7 @@ import AppLayout from "../components/layout/AppLayout";
 import "../styles/evaluation.css";
 import imgIndustrialTurbine from "../assets/building.png";
 
-function EvaluationPage({ user, onNavChange }) {
+function EvaluationPage({ user, onNavChange, onLogout }) {
   const [activeNav, setActiveNav] = useState("Evaluation");
 
   // Handle nav changes
@@ -46,7 +46,12 @@ function EvaluationPage({ user, onNavChange }) {
   };
 
   return (
-    <AppLayout activeNav={activeNav} onNavChange={handleNavChange} user={user}>
+    <AppLayout
+      activeNav={activeNav}
+      onNavChange={handleNavChange}
+      user={user}
+      onLogout={onLogout}
+    >
       <div className="evaluation-container">
         {/* Page Header */}
         <div className="evaluation-header">
@@ -78,7 +83,6 @@ function EvaluationPage({ user, onNavChange }) {
                     <option>Turbine Unit Alpha-7</option>
                     <option>Turbine Unit Beta-3</option>
                   </select>
-                  <span className="select-icon">▼</span>
                 </div>
               </div>
 
@@ -90,7 +94,7 @@ function EvaluationPage({ user, onNavChange }) {
                   name="equipmentType"
                   value={formData.equipmentType}
                   onChange={handleInputChange}
-                  className="form-input"
+                  className="form-input evaluation-input"
                 />
               </div>
 
@@ -102,7 +106,7 @@ function EvaluationPage({ user, onNavChange }) {
                   name="plannedLoad"
                   value={formData.plannedLoad}
                   onChange={handleInputChange}
-                  className="form-input"
+                  className="form-input evaluation-input"
                 />
               </div>
 
@@ -119,7 +123,6 @@ function EvaluationPage({ user, onNavChange }) {
                     <option>RPM (Revolutions)</option>
                     <option>PSI (Pressure)</option>
                   </select>
-                  <span className="select-icon">▼</span>
                 </div>
               </div>
 
@@ -131,7 +134,7 @@ function EvaluationPage({ user, onNavChange }) {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  className="form-input"
+                  className="form-input evaluation-input"
                 />
               </div>
             </div>

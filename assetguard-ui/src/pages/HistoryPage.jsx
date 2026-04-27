@@ -2,7 +2,7 @@ import { useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import "../styles/history.css";
 
-function HistoryPage({ user, onNavChange }) {
+function HistoryPage({ user, onNavChange, onLogout }) {
   const [activeNav, setActiveNav] = useState("History");
   const [evaluatorFilter, setEvaluatorFilter] = useState("all");
   const [organizationFilter, setOrganizationFilter] = useState("all");
@@ -103,7 +103,12 @@ function HistoryPage({ user, onNavChange }) {
   const managers = ["All Managers", "Manager 1", "Manager 2", "Manager 3"];
 
   return (
-    <AppLayout activeNav={activeNav} onNavChange={handleNavChange} user={user}>
+    <AppLayout
+      activeNav={activeNav}
+      onNavChange={handleNavChange}
+      user={user}
+      onLogout={onLogout}
+    >
       <div className="history-container">
         {/* Page Header */}
         <div className="history-header">

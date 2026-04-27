@@ -3,8 +3,18 @@ import AuthLayout from "../components/layout/AuthLayout";
 import buildingImage from "../assets/building.png";
 import { API_BASE_URL } from "../services/apiClient";
 
+const LAST_LOGIN_EMAIL_KEY = "assetguard:last-login-email";
+
+function getLastLoginEmail() {
+  try {
+    return localStorage.getItem(LAST_LOGIN_EMAIL_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
 function LoginEmailPage({ onLoginSuccess, systemMessage = "" }) {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(getLastLoginEmail);
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,6 +41,11 @@ function LoginEmailPage({ onLoginSuccess, systemMessage = "" }) {
       const payload = await response.json();
       if (!response.ok || payload?.success === false) {
         throw new Error(payload?.message || "Login failed.");
+      }
+      try {
+        localStorage.setItem(LAST_LOGIN_EMAIL_KEY, email.trim());
+      } catch {
+        // Ignore storage failures (e.g. private mode restrictions).
       }
       onLoginSuccess(payload?.data ?? payload);
     } catch (error) {
