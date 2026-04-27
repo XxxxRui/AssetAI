@@ -1,4 +1,4 @@
-function Topbar({ user }) {
+function Topbar({ user, onLogout }) {
   const fullLabel = user?.name || user?.email || "John Doe";
   const initials = fullLabel
     .split("@")[0]
@@ -14,7 +14,12 @@ function Topbar({ user }) {
       <div className="topbar-user-group">
         <div className="topbar-user">{fullLabel}</div>
         <div className="topbar-avatar">{initials}</div>
-        <button type="button" className="topbar-logout" aria-label="Log out">
+        <button
+          type="button"
+          className="topbar-logout"
+          aria-label="Log out"
+          onClick={() => onLogout?.()}
+        >
           ↪
         </button>
       </div>
