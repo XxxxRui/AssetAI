@@ -94,7 +94,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                   name="equipmentType"
                   value={formData.equipmentType}
                   onChange={handleInputChange}
-                  className="form-input"
+                  className="form-input evaluation-input"
                 />
               </div>
 
@@ -106,7 +106,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                   name="plannedLoad"
                   value={formData.plannedLoad}
                   onChange={handleInputChange}
-                  className="form-input"
+                  className="form-input evaluation-input"
                 />
               </div>
 
@@ -134,7 +134,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  className="form-input"
+                  className="form-input evaluation-input"
                 />
               </div>
             </div>
