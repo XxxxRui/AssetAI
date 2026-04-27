@@ -2,7 +2,7 @@ import { useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import "../styles/admin-location.css";
 
-function AdminLocationPage({ user, onNavChange }) {
+function AdminLocationPage({ user, onNavChange, onLogout }) {
   const [activeNav, setActiveNav] = useState("Admin/Location");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -66,7 +66,12 @@ function AdminLocationPage({ user, onNavChange }) {
   };
 
   return (
-    <AppLayout activeNav={activeNav} onNavChange={handleNavChange} user={user}>
+    <AppLayout
+      activeNav={activeNav}
+      onNavChange={handleNavChange}
+      user={user}
+      onLogout={onLogout}
+    >
       <div className="admin-location-container">
         {/* Top Breadcrumb */}
         <div className="breadcrumb-section">
