@@ -37,7 +37,7 @@ const LOAD_PARAMETER_MAPPING = {
   "Vessel": { label: "Displacement", metric: "t" },
 };
 
-function EvaluationPage({ user, onNavChange }) {
+function EvaluationPage({ user, onNavChange, onLogout }) {
   const [activeNav, setActiveNav] = useState("Evaluation");
   const [showResult, setShowResult] = useState(false);
 
@@ -112,7 +112,12 @@ function EvaluationPage({ user, onNavChange }) {
     : null;
 
   return (
-    <AppLayout activeNav={activeNav} onNavChange={handleNavChange} user={user}>
+    <AppLayout
+      activeNav={activeNav}
+      onNavChange={handleNavChange}
+      user={user}
+      onLogout={onLogout}
+    >
       <div className="evaluation-container">
         {/* Page Header */}
         <div className="page-header">
@@ -146,7 +151,6 @@ function EvaluationPage({ user, onNavChange }) {
                       </option>
                     ))}
                   </select>
-                  <span className="select-icon">▼</span>
                 </div>
               </div>
 
@@ -188,7 +192,6 @@ function EvaluationPage({ user, onNavChange }) {
                       </option>
                     ))}
                   </select>
-                  <span className="select-icon">▼</span>
                 </div>
               </div>
 

@@ -152,6 +152,7 @@
 
 .history-table {
   width: 100%;
+  min-width: 1280px;
   border-collapse: collapse;
   background: white;
   min-width: 1200px;
@@ -189,40 +190,40 @@
 }
 
 .table-cell-id {
-  width: 128.66px;
+  width: 140px;
   text-align: left;
 }
 
 .table-cell-evaluator {
-  width: 81.95px;
+  width: 180px;
 }
 
 .table-cell-asset {
-  width: 109.89px;
+  width: 170px;
 }
 
 .table-cell-org {
-  width: 121.02px;
+  width: 180px;
 }
 
 .table-cell-equipment {
-  width: 99.41px;
+  width: 180px;
 }
 
 .table-cell-capacity {
-  width: 86.16px;
+  width: 150px;
 }
 
 .table-cell-result {
-  width: 111.22px;
+  width: 140px;
 }
 
 .table-cell-alert {
-  width: 105.64px;
+  width: 130px;
 }
 
 .table-cell-action {
-  width: 114.98px;
+  width: 90px;
 }
 
 .eval-id {

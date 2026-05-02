@@ -4,7 +4,7 @@ import Modal from "../components/modal/Modal";
 import CreateAssetForm from "../components/forms/CreateAssetForm";
 import "../styles/assets.css";
 
-function AssetsPage({ user, onNavChange }) {
+function AssetsPage({ user, onNavChange, onLogout }) {
   const [activeNav, setActiveNav] = useState("Assets");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -131,7 +131,12 @@ function AssetsPage({ user, onNavChange }) {
   };
 
   return (
-    <AppLayout activeNav={activeNav} onNavChange={handleNavChange} user={user}>
+    <AppLayout
+      activeNav={activeNav}
+      onNavChange={handleNavChange}
+      user={user}
+      onLogout={onLogout}
+    >
       <div className="assets-container">
         {/* Page Header */}
         <div className="assets-header">

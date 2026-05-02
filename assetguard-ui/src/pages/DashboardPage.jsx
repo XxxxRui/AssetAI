@@ -9,6 +9,7 @@ import AssetsPage from "./AssetsPage";
 import HistoryPage from "./HistoryPage";
 import AdminUsersPage from "./AdminUsersPage";
 import AdminLocationPage from "./AdminLocationPage";
+import AlertsPage from "./AlertsPage";
 
 const recentEvaluations = [
   ["Main Turbine G7", "Siemens SGT-800", "Compliant", "14:22 PM"],
@@ -31,32 +32,40 @@ const navDescriptions = {
   Admin: "Manage users, roles, and system-level settings.",
 };
 
-function DashboardPage({ user }) {
+function DashboardPage({ user, onLogout }) {
   const [activeNav, setActiveNav] = useState("Dashboard");
 
   if (activeNav === "Evaluation") {
-    return <EvaluationPage user={user} onNavChange={setActiveNav} />;
+    return <EvaluationPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
   }
 
   if (activeNav === "Assets") {
-    return <AssetsPage user={user} onNavChange={setActiveNav} />;
+    return <AssetsPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
   }
 
   if (activeNav === "History") {
-    return <HistoryPage user={user} onNavChange={setActiveNav} />;
+    return <HistoryPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
   }
 
   if (activeNav === "Admin/User") {
-    return <AdminUsersPage user={user} onNavChange={setActiveNav} />;
+    return <AdminUsersPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
   }
 
   if (activeNav === "Admin/Location") {
-    return <AdminLocationPage user={user} onNavChange={setActiveNav} />;
+    return <AdminLocationPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
   }
+
+  if (activeNav === "Alerts") {
+  return (
+    <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user} onLogout={onLogout}>
+      <AlertsPage />
+    </AppLayout>
+  );
+}
 
   if (activeNav !== "Dashboard") {
     return (
-      <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user}>
+      <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user} onLogout={onLogout}>
         <section className="module-placeholder">
           <h1>{activeNav}</h1>
           <p>{navDescriptions[activeNav]}</p>
@@ -70,7 +79,7 @@ function DashboardPage({ user }) {
   }
 
   return (
-    <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user}>
+    <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user} onLogout={onLogout}>
       <DashboardHeader />
 
       <section className="stats-grid">
