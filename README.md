@@ -2,7 +2,7 @@
 
 This workspace contains **two separate Python projects**:
 
-- `AssetGuard AI/` — the main Flask backend
+- `AssetGuard-AI/` — the main Flask backend
   - stores locations, assets, load capacities, and evaluation logs
   - imports AI-generated asset JSON into the main database
 - `gjp-assetguard-extraction-tool/` — the AI extraction tool
@@ -22,7 +22,7 @@ These two projects are **independent**.
 
 | Project | README | API Reference |
 |---------|--------|---------------|
-| Main backend | `AssetGuard AI/README.md` | `AssetGuard AI/API_DOCUMENTATION.md` |
+| Main backend | `AssetGuard-AI/README.md` | `AssetGuard-AI/API_DOCUMENTATION.md` |
 | AI extraction tool | `gjp-assetguard-extraction-tool/README.md` | — |
 
 ---
@@ -91,14 +91,14 @@ git push -u origin <your-branch-name>
 
 ---
 
-## 1. Main Backend — `AssetGuard AI`
+## 1. Main Backend — `AssetGuard-AI`
 
 ### Set up the virtual environment
 
 **Windows (PowerShell):**
 
 ```powershell
-cd "D:/{your path}/AssetGuard AI"
+cd "D:/{your path}/AssetGuard-AI"
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
@@ -107,7 +107,7 @@ python -m pip install -r requirements.txt
 **macOS / Linux:**
 
 ```bash
-cd "/path/to/AssetGuard AI"
+cd "/path/to/AssetGuard-AI"
 python3 -m venv venv
 source venv/bin/activate
 python -m pip install -r requirements.txt
@@ -115,7 +115,7 @@ python -m pip install -r requirements.txt
 
 ### Environment variables (optional)
 
-Create an `.env` file (or export variables) in the `AssetGuard AI/` folder to override defaults:
+Create an `.env` file (or export variables) in the `AssetGuard-AI/` folder to override defaults:
 
 ```env
 # Token signing secret — change in production
@@ -157,13 +157,13 @@ Bootstrap behavior:
 - Always runs `flask db upgrade` first
 - Runs `flask seed` when either:
   - `.dev_bootstrap_done` is missing, or
-  - `AssetGuard AI/instance/assetguard.db` was missing before startup
+  - `AssetGuard-AI/instance/assetguard.db` was missing before startup
 - Skips `seed` only when both marker and pre-existing DB are present
 
 Manual backend-only alternative:
 
 ```bash
-# In AssetGuard AI/
+# In AssetGuard-AI/
 python -m flask --app assetguard_app.py db upgrade
 python -m flask --app assetguard_app.py seed
 python -m flask --app assetguard_app.py run --port 5000
@@ -256,7 +256,7 @@ http://127.0.0.1:5001
 
 ## Recommended Local Workflow
 
-1. Start `AssetGuard AI` in its own virtual environment.
+1. Start `AssetGuard-AI` in its own virtual environment.
 2. Start `gjp-assetguard-extraction-tool` in its own virtual environment.
 3. Use the AI tool to process PDF / image documents and generate asset JSON files into `gjp-assetguard-extraction-tool/uploads/`.
 4. Call `POST /api/v1/assets/import-json-uploads` on the main backend to import those files into the database.
@@ -433,7 +433,7 @@ Each load capacity name is bound to exactly one allowed metric. Mismatching them
 
 ## Automated Tests
 
-Run from inside the `AssetGuard AI/` virtual environment:
+Run from inside the `AssetGuard-AI/` virtual environment:
 
 ```bash
 python -m unittest tests.test_api_flow -v

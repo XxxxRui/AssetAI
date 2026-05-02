@@ -2,6 +2,17 @@
 
 set -euo pipefail
 
+# Detect Apple Silicon architecture
+ARCH=$(uname -m)
+if [[ "$ARCH" == "arm64" ]]; then
+  echo "[Info] Detected Apple Silicon (ARM64) architecture"
+  export ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future
+fi
+
+if [[ -f "/opt/homebrew/bin/brew" ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$SCRIPT_DIR"
 BACKEND_DIR="$REPO_ROOT/AssetGuard-AI"
@@ -17,30 +28,41 @@ if [[ ! -d "$FRONTEND_DIR" ]]; then
   exit 1
 fi
 
-echo "== AssetGuard Backend Bootstrap =="
+echo "== AssetGuard Backend Bootstrap (using uv) =="
 cd "$BACKEND_DIR"
 
-if [[ ! -x ".venv/bin/python" && ! -x "venv/bin/python" ]]; then
-  echo "[First-time] No backend virtual environment found. Creating .venv ..."
-  python3 -m venv .venv
+# Check if uv is installed
+if ! command -v uv &> /dev/null; then
+  echo "Error: uv is not installed. Please install it first:"
+  echo "  curl -LsSf https://astral.sh/uv/install.sh | sh"
+  exit 1
 fi
 
-if [[ -x ".venv/bin/python" ]]; then
-  PY_EXE=".venv/bin/python"
-  echo "Using backend venv: .venv"
+# Create virtual environment with uv if it doesn't exist
+if [[ ! -d ".venv" ]]; then
+  echo "[First-time] Creating virtual environment with uv..."
+  uv venv .venv
+fi
+
+# Activate virtual environment
+if [[ -f ".venv/bin/activate" ]]; then
+  source .venv/bin/activate
+  echo "Virtual environment activated: .venv"
 else
-  PY_EXE="venv/bin/python"
-  echo "Using backend venv: venv"
+  echo "Error: Failed to create or activate virtual environment" >&2
+  exit 1
 fi
 
-echo "Python executable path: $BACKEND_DIR/$PY_EXE"
-"$PY_EXE" -m pip install --upgrade pip
+PY_EXE="$(pwd)/.venv/bin/python"
+echo "Python executable path: $PY_EXE"
 
-echo "Ensuring backend dependencies from requirements.txt ..."
-"$PY_EXE" -m pip install -r requirements.txt
+# Install dependencies using uv
+echo "Installing backend dependencies from requirements.txt with uv..."
+uv pip install -r requirements.txt
 
 BOOTSTRAP_MARKER=".dev_bootstrap_done"
 DB_PATH="./instance/assetguard.db"
+
 if [[ -f "$DB_PATH" ]]; then
   DB_EXISTED_BEFORE_UPGRADE=true
 else
@@ -54,7 +76,7 @@ else
 fi
 
 echo "Running database migrations: flask db upgrade ..."
-"$PY_EXE" -m flask --app assetguard_app.py db upgrade
+$PY_EXE -m flask --app assetguard_app.py db upgrade
 
 if [[ "$MARKER_EXISTS" == false || "$DB_EXISTED_BEFORE_UPGRADE" == false ]]; then
   if [[ "$DB_EXISTED_BEFORE_UPGRADE" == false ]]; then
@@ -63,7 +85,7 @@ if [[ "$MARKER_EXISTS" == false || "$DB_EXISTED_BEFORE_UPGRADE" == false ]]; the
     echo "[First-time] Bootstrap marker missing. Running flask seed ..."
   fi
 
-  "$PY_EXE" -m flask --app assetguard_app.py seed
+  $PY_EXE -m flask --app assetguard_app.py seed
   touch "$BOOTSTRAP_MARKER"
   echo "[First-time] Bootstrap completed. Marker file created."
 else
@@ -80,20 +102,24 @@ else
   echo "[Normal] node_modules exists. Skip npm install."
 fi
 
-echo "Starting backend and frontend dev servers ..."
+echo "== Starting backend and frontend dev servers =="
 
 cd "$BACKEND_DIR"
-"$PY_EXE" -m flask --app assetguard_app.py run &
+$PY_EXE -m flask --app assetguard_app.py run &
 BACKEND_PID=$!
+echo "Backend started (PID: $BACKEND_PID)"
 
 cd "$FRONTEND_DIR"
 npm run dev &
 FRONTEND_PID=$!
+echo "Frontend started (PID: $FRONTEND_PID)"
 
 cleanup() {
   echo ""
   echo "Stopping backend and frontend..."
   kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
+  cd "$BACKEND_DIR"
+  deactivate 2>/dev/null || true
 }
 
 trap cleanup INT TERM
