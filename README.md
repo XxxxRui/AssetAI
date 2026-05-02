@@ -87,7 +87,8 @@ git push -u origin <your-branch-name>
 ### Requirements
 
 - Python 3.11+
-- `pip`
+- Node.js and npm
+- For **macOS Apple Silicon only**: `uv` package manager (see [Initialise and run](#initialise-and-run) section)
 
 ---
 
@@ -144,7 +145,21 @@ cd "D:/{your path}/AssetAI-Guard"
 .\start-dev.bat
 ```
 
-**macOS / Linux:**
+**macOS with Apple Silicon:**
+
+First, install `uv`:
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then start the development servers:
+```bash
+cd "/path/to/AssetAI-Guard"
+chmod +x ./start-dev-uv.sh
+./start-dev-uv.sh
+```
+
+**Intel Mac / Linux:**
 
 ```bash
 cd "/path/to/AssetAI-Guard"
@@ -159,6 +174,8 @@ Bootstrap behavior:
   - `.dev_bootstrap_done` is missing, or
   - `AssetGuard-AI/instance/assetguard.db` was missing before startup
 - Skips `seed` only when both marker and pre-existing DB are present
+
+**Note on package managers**: The `start-dev-uv.sh` script uses `uv` for faster dependency installation on macOS Apple Silicon, while `start-dev.sh` uses the standard `pip` approach.
 
 Manual backend-only alternative:
 
