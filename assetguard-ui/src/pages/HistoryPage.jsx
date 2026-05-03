@@ -4,10 +4,8 @@ import "../styles/history.css";
 
 function HistoryPage({ user, onNavChange, onLogout }) {
   const [activeNav, setActiveNav] = useState("History");
-  const [evaluatorFilter, setEvaluatorFilter] = useState("all");
-  const [organizationFilter, setOrganizationFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [managerFilter, setManagerFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
 
   // Handle nav changes
@@ -19,71 +17,82 @@ function HistoryPage({ user, onNavChange, onLogout }) {
     }
   };
 
-  // Sample evaluation history data
+  // Sample evaluation history data - Matches EvaluationLog database schema
+  // Fields: id, asset_id, asset, user_id, user, equipment, equipment_model,
+  //         load_parameter_value, load_parameter_metric, matched_capacity_name,
+  //         status, overload_percentage, remark, evaluated_at
   const evaluationData = [
     {
-      id: "#EV-2024-0891",
-      evaluator: "Sarah Jenkins",
-      evaluatorAvatar: "SJ",
-      asset: "XJ-900 Core",
-      assetType: "Turbine Unit",
-      organization: "Aero Precision Ltd",
-      equipment: "Industrial Press-02",
-      capacity: "1200kg",
-      load: "850kg",
-      status: "Compliance",
-      statusBg: "#d1fae5",
-      statusColor: "#047857",
-      alert: "Unsent",
-      alertIcon: "📤",
+      id: 1,
+      assetId: 1,
+      assetName: "Berth 2",
+      locationName: "Port of Bunbury",
+      userId: 1,
+      userName: "admin",
+      userEmail: "admin@example.com",
+      equipment: "Crane with outriggers",
+      equipmentModel: "Model X-2000",
+      loadParameterValue: 800,
+      loadParameterMetric: "kN",
+      matchedCapacityName: "max point load",
+      status: "Compliant",
+      overloadPercentage: 0,
+      remark: "Equipment load within safe limits",
+      evaluatedAt: "2024-04-23T10:30:00Z",
     },
     {
-      id: "#EV-2024-0889",
-      evaluator: "Michael Chen",
-      evaluatorAvatar: "MC",
-      asset: "Hydro-Lift S1",
-      assetType: "Crane",
-      organization: "Skybound Logistics",
-      equipment: "Heavy Crane X-1",
-      capacity: "5000kg",
-      load: "4500kg",
-      status: "Non-Compliance",
-      statusBg: "#fee2e2",
-      statusColor: "#dc2626",
-      alert: "Resolved",
-      alertIcon: "✓",
+      id: 2,
+      assetId: 4,
+      assetName: "Berth 8",
+      locationName: "Port of Bunbury",
+      userId: 2,
+      userName: "manager",
+      userEmail: "manager@example.com",
+      equipment: "Mobile crane",
+      equipmentModel: "Liebherr LR1600",
+      loadParameterValue: 92,
+      loadParameterMetric: "t",
+      matchedCapacityName: "max axle load",
+      status: "Non-Compliant",
+      overloadPercentage: 5.2,
+      remark: "Load exceeds maximum axle load capacity",
+      evaluatedAt: "2024-04-22T14:15:00Z",
     },
     {
-      id: "#EV-2024-0880",
-      evaluator: "Alice Mane",
-      evaluatorAvatar: "AM",
-      asset: "Delta Pump 4",
-      assetType: "Fluid Handler",
-      organization: "Global Freight Co",
-      equipment: "Valve Matrix 09",
-      capacity: "450L/min",
-      load: "320L/min",
-      status: "Compliance",
-      statusBg: "#d1fae5",
-      statusColor: "#047857",
-      alert: "Sent",
-      alertIcon: "✓",
+      id: 3,
+      assetId: 3,
+      assetName: "Berth 5",
+      locationName: "Port of Bunbury",
+      userId: 1,
+      userName: "admin",
+      userEmail: "admin@example.com",
+      equipment: "Vessel",
+      equipmentModel: "Container Ship",
+      loadParameterValue: 65000,
+      loadParameterMetric: "t",
+      matchedCapacityName: "max displacement size",
+      status: "Compliant",
+      overloadPercentage: 0,
+      remark: "Vessel displacement within safe operating range",
+      evaluatedAt: "2024-04-21T09:45:00Z",
     },
     {
-      id: "#EV-2024-0880",
-      evaluator: "David Wright",
-      evaluatorAvatar: "DW",
-      asset: "Thermal-X P1",
-      assetType: "Heat Exchanger",
-      organization: "Aero Precision Ltd",
-      equipment: "Condenser Unit 4",
-      capacity: "800kW",
-      load: "750kW",
-      status: "Compliance",
-      statusBg: "#d1fae5",
-      statusColor: "#047857",
-      alert: "Sent",
-      alertIcon: "✓",
+      id: 4,
+      assetId: 6,
+      assetName: "Hardstand A",
+      locationName: "Port of Bunbury",
+      userId: 3,
+      userName: "contractor",
+      userEmail: "contractor@example.com",
+      equipment: "Storage Load",
+      equipmentModel: "Pallet Stack",
+      loadParameterValue: 35,
+      loadParameterMetric: "kPa",
+      matchedCapacityName: "max uniform distributor load",
+      status: "Compliant",
+      overloadPercentage: 0,
+      remark: "Storage load distribution acceptable",
+      evaluatedAt: "2024-04-20T16:20:00Z",
     },
   ];
 
@@ -97,10 +106,25 @@ function HistoryPage({ user, onNavChange, onLogout }) {
     // TODO: Implement action menu
   };
 
-  const uniqueEvaluators = ["All Evaluators", "Sarah Jenkins", "Michael Chen", "Alice Mane", "David Wright"];
-  const uniqueOrganizations = ["All Organisations", "Aero Precision Ltd", "Skybound Logistics", "Global Freight Co"];
-  const statuses = ["All Results", "Compliance", "Non-Compliance"];
-  const managers = ["All Managers", "Manager 1", "Manager 2", "Manager 3"];
+  const uniqueLocations = ["All Locations", "Port of Bunbury"];
+  const statuses = ["All Results", "Compliant", "Non-Compliant"];
+
+  const getStatusStyle = (status) => {
+    return status === "Compliant"
+      ? { bg: "#d1fae5", color: "#047857" }
+      : { bg: "#fee2e2", color: "#dc2626" };
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <AppLayout
@@ -127,30 +151,15 @@ function HistoryPage({ user, onNavChange, onLogout }) {
         {/* Filters Section */}
         <div className="filters-area">
           <div className="filter-group">
-            <label className="filter-label">EVALUATOR</label>
+            <label className="filter-label">LOCATION</label>
             <select
               className="filter-select"
-              value={evaluatorFilter}
-              onChange={(e) => setEvaluatorFilter(e.target.value)}
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
             >
-              {uniqueEvaluators.map((evaluator) => (
-                <option key={evaluator} value={evaluator.toLowerCase()}>
-                  {evaluator}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label className="filter-label">ORGANISATION</label>
-            <select
-              className="filter-select"
-              value={organizationFilter}
-              onChange={(e) => setOrganizationFilter(e.target.value)}
-            >
-              {uniqueOrganizations.map((org) => (
-                <option key={org} value={org.toLowerCase()}>
-                  {org}
+              {uniqueLocations.map((location) => (
+                <option key={location} value={location.toLowerCase()}>
+                  {location}
                 </option>
               ))}
             </select>
@@ -170,21 +179,6 @@ function HistoryPage({ user, onNavChange, onLogout }) {
               ))}
             </select>
           </div>
-
-          <div className="filter-group">
-            <label className="filter-label">ASSET MANAGERS</label>
-            <select
-              className="filter-select"
-              value={managerFilter}
-              onChange={(e) => setManagerFilter(e.target.value)}
-            >
-              {managers.map((manager) => (
-                <option key={manager} value={manager.toLowerCase()}>
-                  {manager}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
 
         {/* Evaluation History Table */}
@@ -195,72 +189,79 @@ function HistoryPage({ user, onNavChange, onLogout }) {
                 <th className="table-header-cell table-cell-id">EVALUATION ID</th>
                 <th className="table-header-cell table-cell-evaluator">EVALUATOR</th>
                 <th className="table-header-cell table-cell-asset">ASSET</th>
-                <th className="table-header-cell table-cell-org">ORGANISATION</th>
+                <th className="table-header-cell table-cell-location">LOCATION</th>
                 <th className="table-header-cell table-cell-equipment">EQUIPMENT</th>
-                <th className="table-header-cell table-cell-capacity">CAPACITY</th>
+                <th className="table-header-cell table-cell-load">LOAD PARAMETER</th>
+                <th className="table-header-cell table-cell-capacity">MATCHED CAPACITY</th>
                 <th className="table-header-cell table-cell-result">RESULT</th>
-                <th className="table-header-cell table-cell-alert">ALERT</th>
+                <th className="table-header-cell table-cell-overload">OVERLOAD %</th>
                 <th className="table-header-cell table-cell-action">ACTION</th>
               </tr>
             </thead>
             <tbody>
-              {evaluationData.map((evaluation, idx) => (
-                <tr key={idx} className="table-body-row">
-                  <td className="table-cell table-cell-id">
-                    <span className="eval-id">{evaluation.id}</span>
-                  </td>
-                  <td className="table-cell table-cell-evaluator">
-                    <div className="evaluator-cell">
-                      <div className="evaluator-avatar">{evaluation.evaluatorAvatar}</div>
-                      <span className="evaluator-name">{evaluation.evaluator}</span>
-                    </div>
-                  </td>
-                  <td className="table-cell table-cell-asset">
-                    <div className="asset-info">
-                      <div className="asset-name">{evaluation.asset}</div>
-                      <div className="asset-type">{evaluation.assetType}</div>
-                    </div>
-                  </td>
-                  <td className="table-cell table-cell-org">
-                    <div className="org-info">{evaluation.organization}</div>
-                  </td>
-                  <td className="table-cell table-cell-equipment">
-                    <div className="equipment-info">{evaluation.equipment}</div>
-                  </td>
-                  <td className="table-cell table-cell-capacity">
-                    <div className="capacity-info">
-                      <div className="capacity-value">{evaluation.capacity}</div>
-                      <div className="capacity-load">Load: {evaluation.load}</div>
-                    </div>
-                  </td>
-                  <td className="table-cell table-cell-result">
-                    <span
-                      className="status-badge"
-                      style={{
-                        backgroundColor: evaluation.statusBg,
-                        color: evaluation.statusColor,
-                      }}
-                    >
-                      {evaluation.status}
-                    </span>
-                  </td>
-                  <td className="table-cell table-cell-alert">
-                    <div className="alert-cell">
-                      <span className="alert-icon">{evaluation.alertIcon}</span>
-                      <span className="alert-status">{evaluation.alert}</span>
-                    </div>
-                  </td>
-                  <td className="table-cell table-cell-action">
-                    <button
-                      className="action-btn"
-                      onClick={() => handleAction(evaluation.id)}
-                      title="More options"
-                    >
-                      ⋮
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {evaluationData.map((evaluation, idx) => {
+                const statusStyle = getStatusStyle(evaluation.status);
+                return (
+                  <tr key={idx} className="table-body-row">
+                    <td className="table-cell table-cell-id">
+                      <span className="eval-id">#{evaluation.id}</span>
+                    </td>
+                    <td className="table-cell table-cell-evaluator">
+                      <div className="evaluator-cell">
+                        <div className="evaluator-avatar">
+                          {evaluation.userName.substring(0, 2).toUpperCase()}
+                        </div>
+                        <span className="evaluator-name">{evaluation.userName}</span>
+                      </div>
+                    </td>
+                    <td className="table-cell table-cell-asset">
+                      <div className="asset-info">
+                        <div className="asset-name">{evaluation.assetName}</div>
+                      </div>
+                    </td>
+                    <td className="table-cell table-cell-location">
+                      <div className="location-info">{evaluation.locationName}</div>
+                    </td>
+                    <td className="table-cell table-cell-equipment">
+                      <div className="equipment-info">
+                        <div className="equipment-name">{evaluation.equipment}</div>
+                        <div className="equipment-model">{evaluation.equipmentModel}</div>
+                      </div>
+                    </td>
+                    <td className="table-cell table-cell-load">
+                      <div className="load-info">
+                        {evaluation.loadParameterValue} {evaluation.loadParameterMetric}
+                      </div>
+                    </td>
+                    <td className="table-cell table-cell-capacity">
+                      <div className="capacity-info">{evaluation.matchedCapacityName}</div>
+                    </td>
+                    <td className="table-cell table-cell-result">
+                      <span
+                        className="status-badge"
+                        style={{
+                          backgroundColor: statusStyle.bg,
+                          color: statusStyle.color,
+                        }}
+                      >
+                        {evaluation.status}
+                      </span>
+                    </td>
+                    <td className="table-cell table-cell-overload">
+                      <span className="overload-value">{evaluation.overloadPercentage}%</span>
+                    </td>
+                    <td className="table-cell table-cell-action">
+                      <button
+                        className="action-btn"
+                        onClick={() => handleAction(evaluation.id)}
+                        title="More options"
+                      >
+                        ⋮
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -6,27 +6,27 @@
   margin: 0 auto;
 }
 
-.evaluation-header {
+.page-header {
   margin-bottom: 48px;
 }
 
-.page-heading {
+.header-left {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.page-title {
+.header-title {
   font-family: 'Montserrat', sans-serif;
   font-size: 36px;
   font-weight: 800;
-  letter-spacing: -1.8px;
+  letter-spacing: -0.9px;
   color: #1b1b1b;
   margin: 0;
   line-height: 40px;
 }
 
-.page-description {
+.header-description {
   font-family: 'Quicksand', sans-serif;
   font-size: 16px;
   font-weight: 500;
@@ -59,22 +59,39 @@
   gap: 24px;
 }
 
+.form-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-grid-layout {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.form-group-asset {
-  grid-column: 1;
+.form-group-col-1 {
+  grid-column: span 3;
 }
 
-.form-group-unit {
-  grid-column: 1;
+.form-group-col-2 {
+  grid-column: span 3;
 }
 
-.form-group-description {
-  grid-column: 2 / span 2;
+.form-group-col-3 {
+  grid-column: span 2;
+}
+
+.form-group-full-width {
+  grid-column: 1 / -1;
 }
 
 .form-label {
@@ -102,7 +119,22 @@
   line-height: 20px;
 }
 
-.form-input::placeholder {
+.form-textarea {
+  background: white;
+  border: 1px solid #6b7280;
+  border-radius: 8px;
+  padding: 13px 17px;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  line-height: 20px;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
   color: #94a3b8;
 }
 
@@ -115,10 +147,35 @@
 }
 
 .form-input:focus,
-.form-select:focus {
+.form-select:focus,
+.form-textarea:focus {
   outline: none;
   border-color: #006d73;
   box-shadow: 0 0 0 3px rgba(0, 109, 115, 0.1);
+}
+
+/* Load Parameter Input Group */
+.load-parameter-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.load-parameter-input-group .form-input {
+  flex: 1;
+}
+
+.load-parameter-metric {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  padding: 13px 17px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  white-space: nowrap;
+  line-height: 20px;
 }
 
 /* Select Wrapper */
@@ -138,13 +195,14 @@
 }
 
 .select-icon {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  font-size: 12px;
-  color: #334155;
+  display: none;
+}
+
+/* Disabled State */
+.form-select:disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 /* Form Actions */

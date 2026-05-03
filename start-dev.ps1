@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$backendDir = Join-Path $repoRoot "AssetGuard AI"
+$backendDir = Join-Path $repoRoot "AssetGuard-AI"
 $frontendDir = Join-Path $repoRoot "assetguard-ui"
 
 if (-not (Test-Path $backendDir)) {
