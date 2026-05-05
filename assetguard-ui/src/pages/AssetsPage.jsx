@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import Modal from "../components/modal/Modal";
 import CreateAssetForm from "../components/forms/CreateAssetForm";
+import { getAuthToken } from "../services/authSession";
 import "../styles/assets.css";
 
 function AssetsPage({ user, onNavChange, onLogout }) {
@@ -9,6 +10,12 @@ function AssetsPage({ user, onNavChange, onLogout }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreateAssetModalOpen, setIsCreateAssetModalOpen] = useState(false);
+  
+  // API data state
+  const [assetsData, setAssetsData] = useState([]);
+  const [totalAssets, setTotalAssets] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // Handle nav changes
   const handleNavChange = (newNav) => {
@@ -19,83 +26,76 @@ function AssetsPage({ user, onNavChange, onLogout }) {
     }
   };
 
-  // Sample assets data - Matches database structure
-  // Asset fields: ID, Location ID, Name
-  // Load Capacity fields: ID, Asset ID, Name, Metric, Max Load, Details
-  const assetsData = [
-    {
-      id: 1,
-      locationId: 1,
-      locationName: "Port of Bunbury",
-      name: "Berth 2",
-      loadCapacities: [
-        { name: "max point load", metric: "kN", maxLoad: 1000 },
-        { name: "max axle load", metric: "t", maxLoad: 87.4 },
-        { name: "max uniform distributor load", metric: "kPa", maxLoad: 40 },
-        { name: "max displacement size", metric: "t", maxLoad: 68100 },
-      ],
-    },
-    {
-      id: 2,
-      locationId: 1,
-      locationName: "Port of Bunbury",
-      name: "Berth 3",
-      loadCapacities: [
-        { name: "max point load", metric: "kN", maxLoad: 1200 },
-        { name: "max axle load", metric: "t", maxLoad: 90 },
-        { name: "max uniform distributor load", metric: "kPa", maxLoad: 42 },
-        { name: "max displacement size", metric: "t", maxLoad: 70000 },
-      ],
-    },
-    {
-      id: 3,
-      locationId: 1,
-      locationName: "Port of Bunbury",
-      name: "Berth 5",
-      loadCapacities: [
-        { name: "max point load", metric: "kN", maxLoad: 1000 },
-        { name: "max axle load", metric: "t", maxLoad: 87.4 },
-        { name: "max uniform distributor load", metric: "kPa", maxLoad: 40 },
-        { name: "max displacement size", metric: "t", maxLoad: 68100 },
-      ],
-    },
-    {
-      id: 4,
-      locationId: 1,
-      locationName: "Port of Bunbury",
-      name: "Berth 8",
-      loadCapacities: [
-        { name: "max point load", metric: "kN", maxLoad: 2642 },
-        { name: "max axle load", metric: "t", maxLoad: 87.4 },
-        { name: "max uniform distributor load", metric: "kPa", maxLoad: 40 },
-        { name: "max displacement size", metric: "t", maxLoad: 72000 },
-      ],
-    },
-    {
-      id: 5,
-      locationId: 1,
-      locationName: "Port of Bunbury",
-      name: "Berth 9",
-      loadCapacities: [
-        { name: "max point load", metric: "kN", maxLoad: 1500 },
-        { name: "max axle load", metric: "t", maxLoad: 88 },
-        { name: "max uniform distributor load", metric: "kPa", maxLoad: 41 },
-        { name: "max displacement size", metric: "t", maxLoad: 69000 },
-      ],
-    },
-    {
-      id: 6,
-      locationId: 1,
-      locationName: "Port of Bunbury",
-      name: "Hardstand A",
-      loadCapacities: [
-        { name: "max point load", metric: "kN", maxLoad: 800 },
-        { name: "max axle load", metric: "t", maxLoad: 85 },
-        { name: "max uniform distributor load", metric: "kPa", maxLoad: 38 },
-        { name: "max displacement size", metric: "t", maxLoad: 65000 },
-      ],
-    },
-  ];
+  // Fetch assets from backend API
+  useEffect(() => {
+    const fetchAssets = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const token = getAuthToken();
+        if (!token) {
+          setError("No authentication token found. Please log in again.");
+          setLoading(false);
+          return;
+        }
+
+        // First, fetch all locations to get their IDs
+        const locResponse = await fetch(
+          "http://127.0.0.1:5000/api/v1/locations/",
+          {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!locResponse.ok) {
+          throw new Error("Failed to fetch locations");
+        }
+
+        const locResult = await locResponse.json();
+        if (!locResult.success || !locResult.data || locResult.data.length === 0) {
+          setError("No locations found");
+          setLoading(false);
+          return;
+        }
+
+        // Fetch assets from the first location (Port of Bunbury = id 1)
+        const locationId = locResult.data[0].id;
+        const response = await fetch(
+          `http://127.0.0.1:5000/api/v1/assets/?locationId=${locationId}&page=1&pageSize=100`,
+          {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch assets: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (result.success && result.data) {
+          setAssetsData(result.data.items || []);
+          setTotalAssets(result.data.total || 0);
+        } else {
+          setError("Invalid response format from server");
+        }
+      } catch (err) {
+        console.error("Error fetching assets:", err);
+        setError(err.message || "Failed to load assets");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssets();
+  }, []);
 
   const filteredAssets = assetsData.filter((asset) =>
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,10 +111,76 @@ function AssetsPage({ user, onNavChange, onLogout }) {
     setIsCreateAssetModalOpen(true);
   };
 
-  const handleCreateAssetSubmit = (formData) => {
-    console.log("Create Asset - Form Data:", formData);
-    // TODO: Send data to backend API
-    setIsCreateAssetModalOpen(false);
+  const handleCreateAssetSubmit = async (formData) => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        alert("No authentication token found. Please log in again.");
+        return;
+      }
+
+      const response = await fetch("http://127.0.0.1:5000/api/v1/assets/", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to create asset: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("Asset created successfully:", result.data);
+      alert("Asset created successfully!");
+      setIsCreateAssetModalOpen(false);
+      
+      // Refresh the assets list
+      try {
+        const locResponse = await fetch(
+          "http://127.0.0.1:5000/api/v1/locations/",
+          {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (locResponse.ok) {
+          const locResult = await locResponse.json();
+          if (locResult.success && locResult.data && locResult.data.length > 0) {
+            const locationId = locResult.data[0].id;
+            const refreshResponse = await fetch(
+              `http://127.0.0.1:5000/api/v1/assets/?locationId=${locationId}&page=1&pageSize=100`,
+              {
+                method: "GET",
+                headers: {
+                  "Authorization": `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            if (refreshResponse.ok) {
+              const refreshResult = await refreshResponse.json();
+              if (refreshResult.success && refreshResult.data) {
+                setAssetsData(refreshResult.data.items || []);
+                setTotalAssets(refreshResult.data.total || 0);
+              }
+            }
+          }
+        }
+      } catch (refreshErr) {
+        console.error("Error refreshing assets list:", refreshErr);
+      }
+    } catch (err) {
+      console.error("Error creating asset:", err);
+      alert(`Error creating asset: ${err.message}`);
+    }
   };
 
   const handleCloseCreateAssetModal = () => {
@@ -166,83 +232,114 @@ function AssetsPage({ user, onNavChange, onLogout }) {
             <input
               type="text"
               className="search-input"
-              placeholder="Filter by asset name or company..."
+              placeholder="Filter by asset name or location..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
 
-        {/* Assets Table */}
-        <div className="assets-table-container">
-          <table className="assets-table">
-            <thead>
-              <tr className="table-header-row">
-                <th className="table-cell table-header-cell">Asset Name</th>
-                <th className="table-cell table-header-cell">Location</th>
-                <th className="table-cell table-header-cell">Max Point Load</th>
-                <th className="table-cell table-header-cell table-actions-cell">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAssets.map((asset) => {
-                const maxPointLoad = asset.loadCapacities.find(lc => lc.name === "max point load");
-                return (
-                  <tr key={asset.id} className="table-body-row">
-                    <td className="table-cell table-data-cell">
-                      <div className="asset-name-cell">
-                        <div className="status-indicator" style={{ backgroundColor: "#006767" }} />
-                        <span className="asset-name">{asset.name}</span>
-                      </div>
-                    </td>
-                    <td className="table-cell table-data-cell">
-                      <span className="organization">{asset.locationName}</span>
-                    </td>
-                    <td className="table-cell table-data-cell">
-                      <span className="max-load">
-                        {maxPointLoad ? `${maxPointLoad.maxLoad} ${maxPointLoad.metric}` : "N/A"}
-                      </span>
-                    </td>
-                    <td className="table-cell table-data-cell table-actions-cell">
-                      <button
-                        className="action-button"
-                        onClick={() => handleAssetAction(asset.id)}
-                        title="More actions"
-                      >
-                        ⋮
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        {/* Error Message */}
+        {error && (
+          <div style={{
+            padding: "12px 16px",
+            marginBottom: "20px",
+            backgroundColor: "#fee2e2",
+            border: "1px solid #ef5350",
+            borderRadius: "4px",
+            color: "#c62828",
+            fontSize: "14px"
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
 
-        {/* Pagination */}
-        <div className="pagination-container">
-          <div className="pagination-info">
-            <span>Showing {filteredAssets.length} of {assetsData.length} assets</span>
+        {/* Loading State */}
+        {loading && (
+          <div style={{
+            padding: "20px",
+            textAlign: "center",
+            color: "#666",
+            fontSize: "14px"
+          }}>
+            Loading assets...
           </div>
-          <div className="pagination-controls">
-            <button
-              className="pagination-button"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-            >
-              ←
-            </button>
-            <span className="pagination-number">{currentPage}</span>
-            <button
-              className="pagination-button"
-              onClick={() => setCurrentPage(currentPage + 1)}
-            >
-              →
-            </button>
+        )}
+
+        {/* Assets Table */}
+        {!loading && (
+          <div className="assets-table-container">
+            <table className="assets-table">
+              <thead>
+                <tr className="table-header-row">
+                  <th className="table-cell table-header-cell">Asset Name</th>
+                  <th className="table-cell table-header-cell">Location</th>
+                  <th className="table-cell table-header-cell">Max Point Load</th>
+                  <th className="table-cell table-header-cell table-actions-cell">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAssets.map((asset) => {
+                  // Handle assets from /assets/all endpoint (no loadCapacities)
+                  const maxPointLoad = asset.loadCapacities?.find(lc => lc.name === "max point load");
+                  
+                  return (
+                    <tr key={asset.id} className="table-body-row">
+                      <td className="table-cell table-data-cell">
+                        <div className="asset-name-cell">
+                          <div className="status-indicator" style={{ backgroundColor: "#006767" }} />
+                          <span className="asset-name">{asset.name}</span>
+                        </div>
+                      </td>
+                      <td className="table-cell table-data-cell">
+                        <span className="organization">Port of Bunbury</span>
+                      </td>
+                      <td className="table-cell table-data-cell">
+                        <span className="max-load">
+                          {maxPointLoad ? `${maxPointLoad.maxLoad} ${maxPointLoad.metric}` : "N/A"}
+                        </span>
+                      </td>
+                      <td className="table-cell table-data-cell table-actions-cell">
+                        <button
+                          className="action-button"
+                          onClick={() => handleAssetAction(asset.id)}
+                          title="More actions"
+                        >
+                          ⋮
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* Pagination */}
+            <div className="pagination-container">
+              <div className="pagination-info">
+                <span>Showing {filteredAssets.length} of {totalAssets} assets</span>
+              </div>
+              <div className="pagination-controls">
+                <button
+                  className="pagination-button"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  ←
+                </button>
+                <span className="pagination-number">{currentPage}</span>
+                <button
+                  className="pagination-button"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                >
+                  →
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Create Asset Modal */}

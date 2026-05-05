@@ -78,8 +78,7 @@ function HistoryPage({ user, onNavChange, onLogout }) {
   
 
   const handleNewEvaluation = () => {
-    console.log("Create new evaluation");
-    // TODO: Navigate to evaluation creation page or open modal
+    handleNavChange("Evaluation");
   };
 
   const handleAction = (evaluationId) => {
