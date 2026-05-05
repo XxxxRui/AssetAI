@@ -255,7 +255,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
       onLogout={onLogout}
     >
       <div className="evaluation-container">
-        {/* Page Header */}
+          {/* Page Header */}
         <div className="page-header">
           <div className="header-left">
             <h1 className="header-title">New Evaluation</h1>
@@ -263,6 +263,27 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
               The AI will verify compliance against current engineering standards.
             </p>
           </div>
+          {showResult && (
+            <button 
+              className="btn-new-evaluation" 
+              onClick={() => {
+                setShowResult(false);
+                setEvaluationResult(null);
+                setFormData({
+                  location: "",
+                  asset: "",
+                  equipment: "",
+                  equipmentModel: "",
+                  loadParameter: "",
+                  detailedDescription: "",
+                });
+                setAssetsByLocation({});
+              }}
+            >
+              <span className="btn-icon">+</span>
+              <span>New Evaluation</span>
+            </button>
+          )}
         </div>
 
         {/* Main Content */}
