@@ -1,12 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import "../styles/history.css";
+import { getAuthToken } from "../services/authSession";
 
 function HistoryPage({ user, onNavChange, onLogout }) {
   const [activeNav, setActiveNav] = useState("History");
   const [locationFilter, setLocationFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // Backend data state
+  const [evaluationData, setEvaluationData] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Handle nav changes
   const handleNavChange = (newNav) => {
@@ -17,84 +25,57 @@ function HistoryPage({ user, onNavChange, onLogout }) {
     }
   };
 
-  // Sample evaluation history data - Matches EvaluationLog database schema
-  // Fields: id, asset_id, asset, user_id, user, equipment, equipment_model,
-  //         load_parameter_value, load_parameter_metric, matched_capacity_name,
-  //         status, overload_percentage, remark, evaluated_at
-  const evaluationData = [
-    {
-      id: 1,
-      assetId: 1,
-      assetName: "Berth 2",
-      locationName: "Port of Bunbury",
-      userId: 1,
-      userName: "admin",
-      userEmail: "admin@example.com",
-      equipment: "Crane with outriggers",
-      equipmentModel: "Model X-2000",
-      loadParameterValue: 800,
-      loadParameterMetric: "kN",
-      matchedCapacityName: "max point load",
-      status: "Compliant",
-      overloadPercentage: 0,
-      remark: "Equipment load within safe limits",
-      evaluatedAt: "2024-04-23T10:30:00Z",
-    },
-    {
-      id: 2,
-      assetId: 4,
-      assetName: "Berth 8",
-      locationName: "Port of Bunbury",
-      userId: 2,
-      userName: "manager",
-      userEmail: "manager@example.com",
-      equipment: "Mobile crane",
-      equipmentModel: "Liebherr LR1600",
-      loadParameterValue: 92,
-      loadParameterMetric: "t",
-      matchedCapacityName: "max axle load",
-      status: "Non-Compliant",
-      overloadPercentage: 5.2,
-      remark: "Load exceeds maximum axle load capacity",
-      evaluatedAt: "2024-04-22T14:15:00Z",
-    },
-    {
-      id: 3,
-      assetId: 3,
-      assetName: "Berth 5",
-      locationName: "Port of Bunbury",
-      userId: 1,
-      userName: "admin",
-      userEmail: "admin@example.com",
-      equipment: "Vessel",
-      equipmentModel: "Container Ship",
-      loadParameterValue: 65000,
-      loadParameterMetric: "t",
-      matchedCapacityName: "max displacement size",
-      status: "Compliant",
-      overloadPercentage: 0,
-      remark: "Vessel displacement within safe operating range",
-      evaluatedAt: "2024-04-21T09:45:00Z",
-    },
-    {
-      id: 4,
-      assetId: 6,
-      assetName: "Hardstand A",
-      locationName: "Port of Bunbury",
-      userId: 3,
-      userName: "contractor",
-      userEmail: "contractor@example.com",
-      equipment: "Storage Load",
-      equipmentModel: "Pallet Stack",
-      loadParameterValue: 35,
-      loadParameterMetric: "kPa",
-      matchedCapacityName: "max uniform distributor load",
-      status: "Compliant",
-      overloadPercentage: 0,
-      remark: "Storage load distribution acceptable",
-      evaluatedAt: "2024-04-20T16:20:00Z",
-    },
-  ];
+  // Fetch evaluation history from backend
+  useEffect(() => {
+    const fetchEvaluationHistory = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const token = getAuthToken();
+        if (!token) {
+          setError("No authentication token found. Please log in again.");
+          return;
+        }
+
+        const params = new URLSearchParams();
+        params.append("page", currentPage.toString());
+        params.append("pageSize", "20");
+
+        const response = await fetch(
+          `http://127.0.0.1:5000/api/v1/evaluations/history?${params}`,
+          {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch evaluation history: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (result.success && result.data) {
+          setEvaluationData(result.data.items || []);
+          setTotalPages(result.data.pages || 1);
+          setTotalItems(result.data.total || 0);
+        } else {
+          setError("Invalid response format from server");
+        }
+      } catch (err) {
+        console.error("Error fetching evaluation history:", err);
+        setError(err.message || "Failed to load evaluation history");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvaluationHistory();
+  }, [currentPage]);
+
+  
 
   const handleNewEvaluation = () => {
     console.log("Create new evaluation");
@@ -183,110 +164,154 @@ function HistoryPage({ user, onNavChange, onLogout }) {
 
         {/* Evaluation History Table */}
         <div className="history-table-container">
-          <table className="history-table">
-            <thead>
-              <tr className="table-header-row">
-                <th className="table-header-cell table-cell-id">EVALUATION ID</th>
-                <th className="table-header-cell table-cell-evaluator">EVALUATOR</th>
-                <th className="table-header-cell table-cell-asset">ASSET</th>
-                <th className="table-header-cell table-cell-location">LOCATION</th>
-                <th className="table-header-cell table-cell-equipment">EQUIPMENT</th>
-                <th className="table-header-cell table-cell-load">LOAD PARAMETER</th>
-                <th className="table-header-cell table-cell-capacity">MATCHED CAPACITY</th>
-                <th className="table-header-cell table-cell-result">RESULT</th>
-                <th className="table-header-cell table-cell-overload">OVERLOAD %</th>
-                <th className="table-header-cell table-cell-action">ACTION</th>
-              </tr>
-            </thead>
-            <tbody>
-              {evaluationData.map((evaluation, idx) => {
-                const statusStyle = getStatusStyle(evaluation.status);
-                return (
-                  <tr key={idx} className="table-body-row">
-                    <td className="table-cell table-cell-id">
-                      <span className="eval-id">#{evaluation.id}</span>
-                    </td>
-                    <td className="table-cell table-cell-evaluator">
-                      <div className="evaluator-cell">
-                        <div className="evaluator-avatar">
-                          {evaluation.userName.substring(0, 2).toUpperCase()}
+          {error && (
+            <div style={{
+              padding: "12px 16px",
+              marginBottom: "20px",
+              backgroundColor: "#ffebee",
+              border: "1px solid #ef5350",
+              borderRadius: "4px",
+              color: "#c62828",
+              fontSize: "14px"
+            }}>
+              ⚠️ {error}
+            </div>
+          )}
+          {loading && (
+            <div style={{
+              padding: "20px",
+              textAlign: "center",
+              color: "#666"
+            }}>
+              Loading evaluation history...
+            </div>
+          )}
+          {!loading && !error && evaluationData.length === 0 && (
+            <div style={{
+              padding: "20px",
+              textAlign: "center",
+              color: "#999"
+            }}>
+              No evaluation records found.
+            </div>
+          )}
+          {!loading && evaluationData.length > 0 && (
+            <table className="history-table">
+              <thead>
+                <tr className="table-header-row">
+                  <th className="table-header-cell table-cell-id">EVALUATION ID</th>
+                  <th className="table-header-cell table-cell-asset">ASSET</th>
+                  <th className="table-header-cell table-cell-equipment">EQUIPMENT</th>
+                  <th className="table-header-cell table-cell-load">LOAD PARAMETER</th>
+                  <th className="table-header-cell table-cell-capacity">MATCHED CAPACITY</th>
+                  <th className="table-header-cell table-cell-result">RESULT</th>
+                  <th className="table-header-cell table-cell-overload">OVERLOAD %</th>
+                  <th className="table-header-cell table-cell-remark">REMARK</th>
+                  <th className="table-header-cell table-cell-time">EVALUATED AT</th>
+                  <th className="table-header-cell table-cell-action">ACTION</th>
+                </tr>
+              </thead>
+              <tbody>
+                {evaluationData.map((evaluation, idx) => {
+                  const statusStyle = getStatusStyle(evaluation.status);
+                  return (
+                    <tr key={idx} className="table-body-row">
+                      <td className="table-cell table-cell-id">
+                        <span className="eval-id">#{evaluation.id}</span>
+                      </td>
+                      <td className="table-cell table-cell-asset">
+                        <div className="asset-info">
+                          <div className="asset-name">{evaluation.assetName}</div>
                         </div>
-                        <span className="evaluator-name">{evaluation.userName}</span>
-                      </div>
-                    </td>
-                    <td className="table-cell table-cell-asset">
-                      <div className="asset-info">
-                        <div className="asset-name">{evaluation.assetName}</div>
-                      </div>
-                    </td>
-                    <td className="table-cell table-cell-location">
-                      <div className="location-info">{evaluation.locationName}</div>
-                    </td>
-                    <td className="table-cell table-cell-equipment">
-                      <div className="equipment-info">
-                        <div className="equipment-name">{evaluation.equipment}</div>
-                        <div className="equipment-model">{evaluation.equipmentModel}</div>
-                      </div>
-                    </td>
-                    <td className="table-cell table-cell-load">
-                      <div className="load-info">
-                        {evaluation.loadParameterValue} {evaluation.loadParameterMetric}
-                      </div>
-                    </td>
-                    <td className="table-cell table-cell-capacity">
-                      <div className="capacity-info">{evaluation.matchedCapacityName}</div>
-                    </td>
-                    <td className="table-cell table-cell-result">
-                      <span
-                        className="status-badge"
-                        style={{
-                          backgroundColor: statusStyle.bg,
-                          color: statusStyle.color,
-                        }}
-                      >
-                        {evaluation.status}
-                      </span>
-                    </td>
-                    <td className="table-cell table-cell-overload">
-                      <span className="overload-value">{evaluation.overloadPercentage}%</span>
-                    </td>
-                    <td className="table-cell table-cell-action">
-                      <button
-                        className="action-btn"
-                        onClick={() => handleAction(evaluation.id)}
-                        title="More options"
-                      >
-                        ⋮
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="table-cell table-cell-equipment">
+                        <div className="equipment-info">
+                          <div className="equipment-name">{evaluation.equipment}</div>
+                          <div className="equipment-model">{evaluation.equipmentModel}</div>
+                        </div>
+                      </td>
+                      <td className="table-cell table-cell-load">
+                        <div className="load-info">
+                          {evaluation.loadParameterValue} {evaluation.loadParameterMetric}
+                        </div>
+                      </td>
+                      <td className="table-cell table-cell-capacity">
+                        <div className="capacity-info">{evaluation.matchedCapacityName}</div>
+                      </td>
+                      <td className="table-cell table-cell-result">
+                        <span
+                          className="status-badge"
+                          style={{
+                            backgroundColor: statusStyle.bg,
+                            color: statusStyle.color,
+                          }}
+                        >
+                          {evaluation.status}
+                        </span>
+                      </td>
+                      <td className="table-cell table-cell-overload">
+                        <span className="overload-value">{(evaluation.overloadPercentage * 100).toFixed(1)}%</span>
+                      </td>
+                      <td className="table-cell table-cell-remark">
+                        <span className="remark-text">{evaluation.remark || "—"}</span>
+                      </td>
+                      <td className="table-cell table-cell-time">
+                        <span className="time-text">{formatDate(evaluation.evaluatedAt)}</span>
+                      </td>
+                      <td className="table-cell table-cell-action">
+                        <button
+                          className="action-btn"
+                          onClick={() => handleAction(evaluation.id)}
+                          title="More options"
+                        >
+                          ⋮
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Pagination */}
         <div className="pagination-container">
           <div className="pagination-info">
-            <span>SHOWING 1 TO 10 OF 1,240 ENTRIES</span>
+            <span>SHOWING 1 TO {evaluationData.length} OF {totalItems} ENTRIES</span>
           </div>
           <div className="pagination-controls">
             <button
               className="pagination-btn"
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
+              disabled={currentPage === 1 || loading}
             >
               ←
             </button>
-            <button className="pagination-btn active">1</button>
-            <button className="pagination-btn">2</button>
-            <button className="pagination-btn">3</button>
-            <span className="pagination-ellipsis">...</span>
-            <button className="pagination-btn">124</button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => (
+              <button 
+                key={i + 1} 
+                className={`pagination-btn ${currentPage === i + 1 ? 'active' : ''}`}
+                onClick={() => setCurrentPage(i + 1)}
+                disabled={loading}
+              >
+                {i + 1}
+              </button>
+            ))}
+            {totalPages > 5 && <span className="pagination-ellipsis">...</span>}
+            {totalPages > 5 && (
+              <button 
+                className={`pagination-btn ${currentPage === totalPages ? 'active' : ''}`}
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={loading}
+              >
+                {totalPages}
+              </button>
+            )}
             <button
               className="pagination-btn"
-              onClick={() => setCurrentPage(currentPage + 1)}
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages || loading}
             >
               →
             </button>
