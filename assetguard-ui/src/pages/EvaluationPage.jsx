@@ -1,23 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import "../styles/evaluation.css";
 import imgIndustrialTurbine from "../assets/building.png";
-
-// Data Structure
-const LOCATIONS = [
-  { id: 1, name: "Port of Bunbury" },
-];
-
-const ASSETS_BY_LOCATION = {
-  1: [
-    { id: 1, name: "Berth 2" },
-    { id: 2, name: "Berth 3" },
-    { id: 3, name: "Berth 5" },
-    { id: 4, name: "Berth 8" },
-    { id: 5, name: "Berth 9" },
-    { id: 6, name: "Hardstand A" },
-  ],
-};
+import { getAuthToken } from "../services/authSession";
 
 const EQUIPMENT_OPTIONS = [
   "Crane with outriggers",
@@ -40,6 +25,26 @@ const LOAD_PARAMETER_MAPPING = {
 function EvaluationPage({ user, onNavChange, onLogout }) {
   const [activeNav, setActiveNav] = useState("Evaluation");
   const [showResult, setShowResult] = useState(false);
+  
+  // Form data state
+  const [formData, setFormData] = useState({
+    location: "",
+    asset: "",
+    equipment: "",
+    equipmentModel: "",
+    loadParameter: "",
+    detailedDescription: "",
+  });
+  
+  // Backend data state
+  const [locations, setLocations] = useState([]);
+  const [assetsByLocation, setAssetsByLocation] = useState({});
+  const [loadingLocations, setLoadingLocations] = useState(false);
+  const [loadingAssets, setLoadingAssets] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
+  const [error, setError] = useState("");
+
+  const [evaluationResult, setEvaluationResult] = useState(null);
 
   // Handle nav changes
   const handleNavChange = (newNav) => {
@@ -50,24 +55,106 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
     }
   };
 
-  const [formData, setFormData] = useState({
-    location: "",
-    asset: "",
-    equipment: "",
-    equipmentModel: "",
-    loadParameter: "",
-    detailedDescription: "",
-  });
+  // Fetch locations on component mount
+  useEffect(() => {
+    const fetchLocations = async () => {
+      setLoadingLocations(true);
+      setError("");
+      try {
+        const token = getAuthToken();
+        if (!token) {
+          setError("No authentication token found. Please log in again.");
+          return;
+        }
 
-  const [evaluationResult, setEvaluationResult] = useState({
-    status: "Compliant",
-    safetyScore: "98/100",
-    date: "Oct 24, 2023",
-    operationalMargin: "14.2%",
-    thermalStability: "Optimal",
-    thermalDetail: "Temperature remains within 2% variance of nominal threshold.",
-    modelMatch: "The evaluated load parameters perfectly align with Alpha-7's historical peak performance signatures. No structural fatigue detected in digital twin simulation.",
-  });
+        const response = await fetch(
+          "http://127.0.0.1:5000/api/v1/locations/",
+          {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch locations: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (result.success && Array.isArray(result.data)) {
+          setLocations(result.data);
+        } else {
+          setError("Invalid response format from server");
+        }
+      } catch (err) {
+        console.error("Error fetching locations:", err);
+        setError(err.message || "Failed to load locations");
+      } finally {
+        setLoadingLocations(false);
+      }
+    };
+
+    fetchLocations();
+  }, []);
+
+  // Fetch assets when location is selected
+  useEffect(() => {
+    if (!formData.location) {
+      setAssetsByLocation({});
+      return;
+    }
+
+    const fetchAssets = async () => {
+      setLoadingAssets(true);
+      setError("");
+      try {
+        const token = getAuthToken();
+        if (!token) {
+          setError("No authentication token found. Please log in again.");
+          return;
+        }
+
+        const response = await fetch(
+          `http://127.0.0.1:5000/api/v1/assets/?locationId=${formData.location}`,
+          {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch assets: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (result.success && result.data?.items) {
+          // Map assets to a simple format for the select dropdown
+          const assets = result.data.items.map(item => ({
+            id: item.id,
+            name: item.name,
+          }));
+          setAssetsByLocation(prev => ({
+            ...prev,
+            [formData.location]: assets,
+          }));
+        } else {
+          setError("Invalid response format from server");
+        }
+      } catch (err) {
+        console.error("Error fetching assets:", err);
+        setError(err.message || "Failed to load assets");
+      } finally {
+        setLoadingAssets(false);
+      }
+    };
+
+    fetchAssets();
+  }, [formData.location]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -95,15 +182,64 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
     }));
   };
 
-  const handleEvaluate = () => {
-    // API call would go here
-    console.log("Evaluating with:", formData);
-    setShowResult(true);
+  const handleEvaluate = async () => {
+    // Validate required fields
+    if (!formData.location || !formData.asset || !formData.equipment || !formData.loadParameter) {
+      setError("Please fill in all required fields: Location, Asset, Equipment, and Load Parameter");
+      return;
+    }
+
+    setEvaluating(true);
+    setError("");
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        setError("No authentication token found. Please log in again.");
+        return;
+      }
+
+      const response = await fetch(
+        "http://127.0.0.1:5000/api/v1/evaluations/check",
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            locationId: parseInt(formData.location),
+            assetId: parseInt(formData.asset),
+            equipment: formData.equipment,
+            equipmentModel: formData.equipmentModel || null,
+            loadParameterValue: parseFloat(formData.loadParameter),
+            remark: formData.detailedDescription || null,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw new Error(errorResult.message || `Failed to evaluate: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      if (result.success && result.data) {
+        setEvaluationResult(result.data);
+        setShowResult(true);
+      } else {
+        setError("Invalid response format from server");
+      }
+    } catch (err) {
+      console.error("Error evaluating:", err);
+      setError(err.message || "Failed to evaluate asset");
+    } finally {
+      setEvaluating(false);
+    }
   };
 
   // Get available assets based on selected location
   const availableAssets = formData.location 
-    ? ASSETS_BY_LOCATION[formData.location] || [] 
+    ? assetsByLocation[formData.location] || [] 
     : [];
 
   // Get load parameter info based on selected equipment
@@ -131,6 +267,21 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
 
         {/* Main Content */}
         <div className="evaluation-content">
+          {/* Error Message */}
+          {error && (
+            <div style={{
+              padding: "12px 16px",
+              marginBottom: "20px",
+              backgroundColor: "#ffebee",
+              border: "1px solid #ef5350",
+              borderRadius: "4px",
+              color: "#c62828",
+              fontSize: "14px"
+            }}>
+              ⚠️ {error}
+            </div>
+          )}
+
           {/* Input Form Section */}
           <div className="input-form-section">
             <div className="form-grid-layout">
@@ -143,9 +294,12 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                     value={formData.location}
                     onChange={handleLocationChange}
                     className="form-select"
+                    disabled={loadingLocations}
                   >
-                    <option value="">Select a Location</option>
-                    {LOCATIONS.map(loc => (
+                    <option value="">
+                      {loadingLocations ? "Loading locations..." : "Select a Location"}
+                    </option>
+                    {locations.map(loc => (
                       <option key={loc.id} value={loc.id}>
                         {loc.name}
                       </option>
@@ -162,9 +316,13 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                     value={formData.asset}
                     onChange={handleInputChange}
                     className="form-select"
-                    disabled={!formData.location}
+                    disabled={!formData.location || loadingAssets}
                   >
-                    <option value="">Select an Asset</option>
+                    <option value="">
+                      {loadingAssets 
+                        ? "Loading assets..." 
+                        : (!formData.location ? "Select a Location first" : "Select an Asset")}
+                    </option>
                     {availableAssets.map(asset => (
                       <option key={asset.id} value={asset.id}>
                         {asset.name}
@@ -242,14 +400,18 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
 
             {/* Evaluate Button */}
             <div className="form-actions">
-              <button className="btn btn-primary" onClick={handleEvaluate}>
-                ⚡ Evaluate Asset
+              <button 
+                className="btn btn-primary" 
+                onClick={handleEvaluate}
+                disabled={evaluating}
+              >
+                {evaluating ? "⏳ Evaluating..." : "⚡ Evaluate Asset"}
               </button>
             </div>
           </div>
 
           {/* Evaluation Result Section */}
-          {showResult && (
+          {showResult && evaluationResult && (
           <div className="evaluation-result-section">
             <div className="result-header">
               <h2 className="result-title">Evaluation Result</h2>
@@ -259,49 +421,85 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
             <div className="result-grid">
               {/* Compliance Card */}
               <div className="compliance-card">
-                <div className="compliance-badge">
-                  <span className="badge-icon">✓</span>
+                <div 
+                  className="compliance-badge"
+                  style={{
+                    background: evaluationResult.status === "Compliant" 
+                      ? "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)"
+                      : "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)"
+                  }}
+                >
+                  <span 
+                    className="badge-icon"
+                    style={{
+                      color: evaluationResult.status === "Compliant" ? "#16a34a" : "#f87171"
+                    }}
+                  >
+                    {evaluationResult.status === "Compliant" ? "✓" : "✕"}
+                  </span>
                 </div>
-                <h3 className="compliance-status">{evaluationResult.status}</h3>
-                <p className="safety-score">Safety Score: {evaluationResult.safetyScore}</p>
-                <p className="result-date">{evaluationResult.date}</p>
+                <h3 
+                  className="compliance-status"
+                  style={{
+                    color: evaluationResult.status === "Compliant" ? "#16a34a" : "#dc2626"
+                  }}
+                >
+                  {evaluationResult.status}
+                </h3>
+                <p className="safety-score">
+                  {evaluationResult.loadParameterValue} {evaluationResult.loadParameterMetric}
+                </p>
+                <p className="result-date">
+                  {evaluationResult.matchedCapacityName}
+                </p>
               </div>
 
-              {/* Metrics Cards */}
-              <div className="metrics-column">
-                {/* Operational Margin */}
-                <div className="metric-card">
-                  <div className="metric-header">
-                    <span className="metric-label">OPERATIONAL MARGIN</span>
-                    <span className="metric-icon">📈</span>
-                  </div>
-                  <div className="metric-value">{evaluationResult.operationalMargin}</div>
-                  <p className="metric-subtitle">Current Load vs Structural Limit</p>
-                  <div className="metric-bar">
-                    <div className="metric-bar-fill" style={{ width: "14.2%" }}></div>
-                  </div>
+              {/* Load Safety Margin */}
+              <div className="metric-card">
+                <div className="metric-header">
+                  <span className="metric-label">LOAD SAFETY MARGIN</span>
+                  <span className="metric-icon">📊</span>
                 </div>
-
-                {/* Thermal Stability */}
-                <div className="metric-card">
-                  <div className="metric-header">
-                    <span className="metric-label">THERMAL STABILITY</span>
-                    <span className="metric-icon">🌡️</span>
-                  </div>
-                  <h3 className="thermal-status">{evaluationResult.thermalStability}</h3>
-                  <p className="thermal-detail">{evaluationResult.thermalDetail}</p>
+                <div className="metric-value">
+                  {evaluationResult.status === "Compliant" 
+                    ? ((evaluationResult.capacityMaxLoad - evaluationResult.loadParameterValue) / evaluationResult.capacityMaxLoad * 100).toFixed(1)
+                    : ((evaluationResult.overloadPercentage * 100).toFixed(1))
+                  }%
                 </div>
+                <p className="metric-subtitle">
+                  {evaluationResult.status === "Compliant" 
+                    ? "Remaining capacity headroom"
+                    : "Overload percentage above limit"
+                  }
+                </p>
               </div>
 
-              {/* Model Signature Match */}
-              <div className="model-signature-card">
-                <h3 className="signature-title">Model Signature Match</h3>
-                <div className="signature-content">
-                  <p className="signature-text">{evaluationResult.modelMatch}</p>
+              {/* Equipment & Capacity Details Card */}
+              <div className="metric-card">
+                <div className="metric-header">
+                  <span className="metric-label">EVALUATION DETAILS</span>
+                  <span className="metric-icon">⚙️</span>
                 </div>
-                <div className="signature-actions">
-                  <button className="btn-link">Download PDF Report</button>
-                  <button className="btn-link">Export JSON Data</button>
+                <div style={{ fontSize: "13px", lineHeight: "1.6", color: "#555" }}>
+                  <div style={{ marginBottom: "8px" }}>
+                    <strong>Equipment:</strong> {evaluationResult.equipment}
+                  </div>
+                  {evaluationResult.equipmentModel && (
+                    <div style={{ marginBottom: "8px" }}>
+                      <strong>Model:</strong> {evaluationResult.equipmentModel}
+                    </div>
+                  )}
+                  <div style={{ marginBottom: "8px" }}>
+                    <strong>Max Capacity:</strong> {evaluationResult.capacityMaxLoad} {evaluationResult.loadParameterMetric}
+                  </div>
+                  <div style={{ marginBottom: "8px" }}>
+                    <strong>Your Load:</strong> {evaluationResult.loadParameterValue} {evaluationResult.loadParameterMetric}
+                  </div>
+                  {evaluationResult.remark && (
+                    <div>
+                      <strong>Remark:</strong> {evaluationResult.remark}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -313,8 +511,15 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                 <span className="status-text">All Nodes Operational</span>
               </div>
               <div className="result-actions">
-                <button className="btn btn-secondary">← Reset Parameters</button>
-                <button className="btn btn-primary">Finalize Evaluation</button>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowResult(false);
+                    setEvaluationResult(null);
+                  }}
+                >
+                  ← New Evaluation
+                </button>
               </div>
             </div>
           </div>
