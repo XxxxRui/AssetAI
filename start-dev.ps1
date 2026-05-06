@@ -13,10 +13,6 @@ if (-not (Test-Path $frontendDir)) {
     throw "Frontend folder not found: $frontendDir"
 }
 
-if (-not (Test-Path $extractionDir)) {
-    throw "Extraction tool folder not found: $extractionDir"
-}
-
 $backendCmdTemplate = @'
 Set-Location '__BACKEND_DIR__'
 
@@ -89,6 +85,8 @@ npm run dev
 '@
 
 $extractionCmdTemplate = @'
+# Extraction tool runs in its own window; failures here must NOT affect backend/frontend.
+try {
 Set-Location '__EXTRACTION_DIR__'
 
 Write-Host '== AssetGuard Extraction Tool Bootstrap ==' -ForegroundColor Cyan
@@ -96,6 +94,10 @@ Write-Host '== AssetGuard Extraction Tool Bootstrap ==' -ForegroundColor Cyan
 if (-not (Test-Path '.\.venv\Scripts\Activate.ps1') -and -not (Test-Path '.\venv\Scripts\Activate.ps1')) {
     Write-Host '[First-time] No extraction-tool virtual environment found. Creating .venv ...' -ForegroundColor Yellow
     python -m venv .venv
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host '[Extraction skipped] Failed to create venv (.venv).' -ForegroundColor Yellow
+        return
+    }
 }
 
 if (Test-Path '.\.venv\Scripts\Activate.ps1') {
@@ -107,14 +109,24 @@ if (Test-Path '.\.venv\Scripts\Activate.ps1') {
 }
 
 if (-not (Test-Path $pyExe)) {
-    throw "Python executable not found in venv: $pyExe"
+    Write-Host '[Extraction skipped] Python executable not found in venv: ' $pyExe -ForegroundColor Yellow
+    return
 }
 
 Write-Host 'Python executable path:' (Resolve-Path $pyExe) -ForegroundColor Green
+
 & $pyExe -m pip install --upgrade pip
+if ($LASTEXITCODE -ne 0) {
+    Write-Host '[Extraction skipped] pip upgrade failed.' -ForegroundColor Yellow
+    return
+}
 
 Write-Host 'Ensuring extraction-tool dependencies from requirements.txt ...' -ForegroundColor Cyan
 & $pyExe -m pip install -r requirements.txt
+if ($LASTEXITCODE -ne 0) {
+    Write-Host '[Extraction skipped] pip install -r requirements.txt failed.' -ForegroundColor Yellow
+    return
+}
 
 if (-not (Test-Path '.\.env')) {
     Write-Host '[Warning] .env file not found in extraction tool folder. Some features may not work.' -ForegroundColor Yellow
@@ -123,6 +135,10 @@ if (-not (Test-Path '.\.env')) {
 Write-Host 'Starting extraction tool server on http://127.0.0.1:5001 ...' -ForegroundColor Cyan
 $env:FLASK_RUN_PORT = '5001'
 & $pyExe -m flask --app app.py run --port 5001
+}
+catch {
+    Write-Host '[Extraction skipped] Error during extraction tool startup:' $_.Exception.Message -ForegroundColor Yellow
+}
 '@
 
 $backendCmd = $backendCmdTemplate.Replace("__BACKEND_DIR__", $backendDir)
@@ -143,15 +159,22 @@ Start-Process powershell -ArgumentList @(
     "`$Host.UI.RawUI.WindowTitle='AssetGuard Frontend'; $frontendCmd"
 )
 
+Write-Host "Started backend and frontend in two new PowerShell windows."
+
 Start-Sleep -Milliseconds 500
 
-Start-Process powershell -ArgumentList @(
-    "-NoExit",
-    "-Command",
-    "`$Host.UI.RawUI.WindowTitle='AssetGuard Extraction Tool'; $extractionCmd"
-)
-
-Write-Host "Started backend, frontend, and extraction tool in three new PowerShell windows."
-Write-Host "  Backend:        http://127.0.0.1:5000"
-Write-Host "  Frontend:       (see frontend window for Vite URL)"
-Write-Host "  Extraction:     http://127.0.0.1:5001"
+if (Test-Path $extractionDir) {
+    Start-Process powershell -ArgumentList @(
+        "-NoExit",
+        "-Command",
+        "`$Host.UI.RawUI.WindowTitle='AssetGuard Extraction Tool'; $extractionCmd"
+    )
+    Write-Host "Also started extraction tool in a separate window."
+    Write-Host "  Backend:        http://127.0.0.1:5000"
+    Write-Host "  Frontend:       (see frontend window for Vite URL)"
+    Write-Host "  Extraction:     http://127.0.0.1:5001"
+} else {
+    Write-Host "[Warning] Extraction tool folder not found; skipping extraction server: $extractionDir" -ForegroundColor Yellow
+    Write-Host "  Backend:        http://127.0.0.1:5000"
+    Write-Host "  Frontend:       (see frontend window for Vite URL)"
+}
