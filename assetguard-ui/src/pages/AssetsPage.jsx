@@ -11,7 +11,9 @@ function AssetsPage({ user, onNavChange, onLogout }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreateAssetModalOpen, setIsCreateAssetModalOpen] = useState(false);
   
-  // API data state
+  // Location and API data state
+  const [locations, setLocations] = useState([]);
+  const [selectedLocationId, setSelectedLocationId] = useState(null);
   const [assetsData, setAssetsData] = useState([]);
   const [totalAssets, setTotalAssets] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -26,8 +28,61 @@ function AssetsPage({ user, onNavChange, onLogout }) {
     }
   };
 
-  // Fetch assets from backend API
+  // Fetch locations on component mount
   useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const token = getAuthToken();
+        if (!token) {
+          setError("No authentication token found. Please log in again.");
+          return;
+        }
+
+        const response = await fetch(
+          "http://127.0.0.1:5000/api/v1/locations/",
+          {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch locations: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log("Locations API response:", result);
+        
+        if (result.success && Array.isArray(result.data)) {
+          setLocations(result.data);
+          // Auto-select first location
+          if (result.data.length > 0) {
+            setSelectedLocationId(result.data[0].id);
+          }
+        } else {
+          setError("Invalid locations response format");
+        }
+      } catch (err) {
+        console.error("Error fetching locations:", err);
+        setError(err.message || "Failed to load locations");
+      }
+    };
+
+    fetchLocations();
+  }, []);
+
+  // Fetch assets when selected location changes
+  useEffect(() => {
+    if (!selectedLocationId) {
+      setAssetsData([]);
+      setTotalAssets(0);
+      setLoading(false);
+      return;
+    }
+
     const fetchAssets = async () => {
       setLoading(true);
       setError("");
@@ -39,33 +94,9 @@ function AssetsPage({ user, onNavChange, onLogout }) {
           return;
         }
 
-        // First, fetch all locations to get their IDs
-        const locResponse = await fetch(
-          "http://127.0.0.1:5000/api/v1/locations/",
-          {
-            method: "GET",
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!locResponse.ok) {
-          throw new Error("Failed to fetch locations");
-        }
-
-        const locResult = await locResponse.json();
-        if (!locResult.success || !locResult.data || locResult.data.length === 0) {
-          setError("No locations found");
-          setLoading(false);
-          return;
-        }
-
-        // Fetch assets from the first location (Port of Bunbury = id 1)
-        const locationId = locResult.data[0].id;
+        // Fetch assets for selected location
         const response = await fetch(
-          `http://127.0.0.1:5000/api/v1/assets/?locationId=${locationId}&page=1&pageSize=100`,
+          `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=100`,
           {
             method: "GET",
             headers: {
@@ -80,9 +111,14 @@ function AssetsPage({ user, onNavChange, onLogout }) {
         }
 
         const result = await response.json();
+        console.log("Assets API response:", result);
+        
         if (result.success && result.data) {
-          setAssetsData(result.data.items || []);
-          setTotalAssets(result.data.total || 0);
+          const assetsList = result.data.items || [];
+          const totalCount = result.data.total || assetsList.length;
+          
+          setAssetsData(assetsList);
+          setTotalAssets(totalCount);
         } else {
           setError("Invalid response format from server");
         }
@@ -95,11 +131,10 @@ function AssetsPage({ user, onNavChange, onLogout }) {
     };
 
     fetchAssets();
-  }, []);
+  }, [selectedLocationId]);
 
   const filteredAssets = assetsData.filter((asset) =>
-    asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.locationName.toLowerCase().includes(searchTerm.toLowerCase())
+    asset.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleBatchImport = () => {
@@ -140,8 +175,10 @@ function AssetsPage({ user, onNavChange, onLogout }) {
       
       // Refresh the assets list
       try {
-        const locResponse = await fetch(
-          "http://127.0.0.1:5000/api/v1/locations/",
+        console.log("Refreshing assets list...");
+        
+        const refreshResponse = await fetch(
+          `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=100`,
           {
             method: "GET",
             headers: {
@@ -151,28 +188,22 @@ function AssetsPage({ user, onNavChange, onLogout }) {
           }
         );
 
-        if (locResponse.ok) {
-          const locResult = await locResponse.json();
-          if (locResult.success && locResult.data && locResult.data.length > 0) {
-            const locationId = locResult.data[0].id;
-            const refreshResponse = await fetch(
-              `http://127.0.0.1:5000/api/v1/assets/?locationId=${locationId}&page=1&pageSize=100`,
-              {
-                method: "GET",
-                headers: {
-                  "Authorization": `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-            if (refreshResponse.ok) {
-              const refreshResult = await refreshResponse.json();
-              if (refreshResult.success && refreshResult.data) {
-                setAssetsData(refreshResult.data.items || []);
-                setTotalAssets(refreshResult.data.total || 0);
-              }
-            }
+        if (refreshResponse.ok) {
+          const refreshResult = await refreshResponse.json();
+          console.log("Assets refresh response:", refreshResult);
+          
+          if (refreshResult.success && refreshResult.data) {
+            const assetsList = refreshResult.data.items || [];
+            const totalCount = refreshResult.data.total || assetsList.length;
+            
+            console.log("Updating assets list with", assetsList.length, "items");
+            setAssetsData(assetsList);
+            setTotalAssets(totalCount);
+          } else {
+            console.warn("Invalid refresh response format");
           }
+        } else {
+          console.warn("Failed to refresh assets:", refreshResponse.status);
         }
       } catch (refreshErr) {
         console.error("Error refreshing assets list:", refreshErr);
@@ -194,6 +225,24 @@ function AssetsPage({ user, onNavChange, onLogout }) {
 
   const getStatusIndicatorColor = (status) => {
     return status === "compliant" ? "#006767" : "#ba1a1a";
+  };
+
+  const formatCapacityName = (name) => {
+    // Convert "max point load" to "Max Point Load"
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  const getMaxLoadDisplay = (asset) => {
+    if (!asset.loadCapacities || asset.loadCapacities.length === 0) {
+      return "No capacity data";
+    }
+
+    // Show the first capacity as the primary max load
+    const firstCapacity = asset.loadCapacities[0];
+    return `${formatCapacityName(firstCapacity.name)}: ${firstCapacity.maxLoad} ${firstCapacity.metric}`;
   };
 
   return (
@@ -225,17 +274,44 @@ function AssetsPage({ user, onNavChange, onLogout }) {
           </div>
         </div>
 
-        {/* Search & Filter */}
-        <div className="search-filter-area">
-          <div className="search-input-wrapper">
-            <span className="search-icon">🔍</span>
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Filter by asset name or location..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        {/* Location Selector & Search */}
+        <div className="filter-search-row">
+          <div className="location-selector-area">
+            <label htmlFor="location-select" style={{ fontSize: "14px", fontWeight: "600", marginRight: "12px" }}>
+              Select Location:
+            </label>
+            <select
+              id="location-select"
+              value={selectedLocationId || ""}
+              onChange={(e) => setSelectedLocationId(parseInt(e.target.value))}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "4px",
+                border: "1px solid #bdc9c8",
+                backgroundColor: "#f5f3f3",
+                fontSize: "14px",
+                cursor: "pointer",
+              }}
+            >
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="search-filter-area">
+            <div className="search-input-wrapper">
+              <span className="search-icon">🔍</span>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Filter by asset name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
         </div>
 
@@ -273,8 +349,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
               <thead>
                 <tr className="table-header-row">
                   <th className="table-cell table-header-cell">Asset Name</th>
-                  <th className="table-cell table-header-cell">Location</th>
-                  <th className="table-cell table-header-cell">Max Point Load</th>
+                  <th className="table-cell table-header-cell">Max Load</th>
                   <th className="table-cell table-header-cell table-actions-cell">
                     Actions
                   </th>
@@ -282,9 +357,6 @@ function AssetsPage({ user, onNavChange, onLogout }) {
               </thead>
               <tbody>
                 {filteredAssets.map((asset) => {
-                  // Handle assets from /assets/all endpoint (no loadCapacities)
-                  const maxPointLoad = asset.loadCapacities?.find(lc => lc.name === "max point load");
-                  
                   return (
                     <tr key={asset.id} className="table-body-row">
                       <td className="table-cell table-data-cell">
@@ -294,11 +366,8 @@ function AssetsPage({ user, onNavChange, onLogout }) {
                         </div>
                       </td>
                       <td className="table-cell table-data-cell">
-                        <span className="organization">Port of Bunbury</span>
-                      </td>
-                      <td className="table-cell table-data-cell">
                         <span className="max-load">
-                          {maxPointLoad ? `${maxPointLoad.maxLoad} ${maxPointLoad.metric}` : "N/A"}
+                          {getMaxLoadDisplay(asset)}
                         </span>
                       </td>
                       <td className="table-cell table-data-cell table-actions-cell">

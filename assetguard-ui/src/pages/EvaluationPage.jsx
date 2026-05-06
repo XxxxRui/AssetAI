@@ -13,6 +13,16 @@ const EQUIPMENT_OPTIONS = [
   "Vessel",
 ];
 
+// Maps equipment to required load capacity name
+const EQUIPMENT_TO_CAPACITY = {
+  "Crane with outriggers": "max point load",
+  "Mobile crane": "max axle load",
+  "Heavy vehicle": "max axle load",
+  "Elevated Work Platform": "max point load",
+  "Storage Load": "max uniform distributor load",
+  "Vessel": "max displacement size",
+};
+
 const LOAD_PARAMETER_MAPPING = {
   "Crane with outriggers": { label: "Max Outrigger Load", metric: "kN" },
   "Mobile crane": { label: "Max Axle Load", metric: "t" },
@@ -39,6 +49,8 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
   // Backend data state
   const [locations, setLocations] = useState([]);
   const [assetsByLocation, setAssetsByLocation] = useState({});
+  const [assetsWithCapacities, setAssetsWithCapacities] = useState({});
+  const [selectedAssetLoadCapacities, setSelectedAssetLoadCapacities] = useState([]);
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
@@ -142,6 +154,16 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
             ...prev,
             [formData.location]: assets,
           }));
+          
+          // Also store complete asset data with loadCapacities
+          const assetsWithLoadCapacities = {};
+          result.data.items.forEach(item => {
+            assetsWithLoadCapacities[item.id] = item;
+          });
+          setAssetsWithCapacities(prev => ({
+            ...prev,
+            [formData.location]: assetsWithLoadCapacities,
+          }));
         } else {
           setError("Invalid response format from server");
         }
@@ -162,6 +184,22 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
       ...prev,
       [name]: value,
     }));
+
+    // If asset selection changed, get its load capacities from stored data
+    if (name === "asset" && value) {
+      const assetWithCapacities = assetsWithCapacities[formData.location]?.[value];
+      if (assetWithCapacities) {
+        setSelectedAssetLoadCapacities(assetWithCapacities.loadCapacities || []);
+      } else {
+        setSelectedAssetLoadCapacities([]);
+      }
+      // Reset equipment and load parameter when asset changes
+      setFormData(prev => ({
+        ...prev,
+        equipment: "",
+        loadParameter: "",
+      }));
+    }
   };
 
   const handleLocationChange = (e) => {
@@ -241,6 +279,14 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
   const availableAssets = formData.location 
     ? assetsByLocation[formData.location] || [] 
     : [];
+
+  // Get available equipment based on selected asset's load capacities
+  const availableEquipment = EQUIPMENT_OPTIONS.filter(equipment => {
+    const requiredCapacity = EQUIPMENT_TO_CAPACITY[equipment];
+    return selectedAssetLoadCapacities.some(
+      capacity => capacity.name === requiredCapacity
+    );
+  });
 
   // Get load parameter info based on selected equipment
   const loadParameterInfo = formData.equipment 
@@ -363,9 +409,16 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                     value={formData.equipment}
                     onChange={handleEquipmentChange}
                     className="form-select"
+                    disabled={!formData.asset || availableEquipment.length === 0}
                   >
-                    <option value="">Select Equipment</option>
-                    {EQUIPMENT_OPTIONS.map(eq => (
+                    <option value="">
+                      {!formData.asset 
+                        ? "Select an Asset first" 
+                        : availableEquipment.length === 0
+                        ? "No compatible equipment"
+                        : "Select Equipment"}
+                    </option>
+                    {availableEquipment.map(eq => (
                       <option key={eq} value={eq}>
                         {eq}
                       </option>
