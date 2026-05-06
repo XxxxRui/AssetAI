@@ -1,10 +1,50 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppLayout from "../components/layout/AppLayout";
+import Modal from "../components/modal/Modal";
+import CreateLocationForm from "../components/forms/CreateLocationForm";
+import { requestJson } from "../services/apiClient";
 import "../styles/admin-location.css";
 
 function AdminLocationPage({ user, onNavChange, onLogout }) {
   const [activeNav, setActiveNav] = useState("Admin/Location");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [locationsData, setLocationsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isCreateLocationModalOpen, setIsCreateLocationModalOpen] = useState(false);
+
+  // Fetch locations from backend
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const result = await requestJson(`/locations/`);
+        console.log("Location API Response:", result);
+        
+        if (result && Array.isArray(result)) {
+          // Map backend data to frontend format
+          const mappedLocations = result.map((location) => ({
+            id: location.id,
+            name: location.name,
+          }));
+
+          console.log("Mapped Locations:", mappedLocations);
+          setLocationsData(mappedLocations);
+        } else {
+          console.warn("Unexpected response format:", result);
+          setError("Unexpected response format from server");
+        }
+      } catch (err) {
+        console.error("Error fetching locations:", err);
+        setError(err.message || "Failed to load locations");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLocations();
+  }, []);
 
   // Handle nav changes
   const handleNavChange = (newNav) => {
@@ -15,49 +55,38 @@ function AdminLocationPage({ user, onNavChange, onLogout }) {
     }
   };
 
-  // Sample locations data
-  const locationsData = [
-    {
-      id: "NDE-9942",
-      location: "North Delta Energy",
-      assetManager: "Sarah Mitchell",
-      contractor: "Precision Infra Group",
-      createdTime: "Oct 12, 2023",
-      createdTimeDetailed: "09:42 AM",
-      updateTime: "Just Now",
-    },
-    {
-      id: "GLH-2281",
-      location: "Global Logistics Hub",
-      assetManager: "Marcus Chen",
-      contractor: "Sterling Maintenance",
-      createdTime: "Sep 28, 2023",
-      createdTimeDetailed: "14:15 PM",
-      updateTime: "2 days ago",
-    },
-    {
-      id: "UGS-0012",
-      location: "Urban Grid Solutions",
-      assetManager: "Elena Rodriguez",
-      contractor: "GridCare Partners",
-      createdTime: "Aug 05, 2023",
-      createdTimeDetailed: "08:00 AM",
-      updateTime: "Sep 15, 2023",
-    },
-    {
-      id: "SPA-6871",
-      location: "Summit Peak Assets",
-      assetManager: "David Vance",
-      contractor: "In-House",
-      createdTime: "Jul 22, 2023",
-      createdTimeDetailed: "11:30 AM",
-      updateTime: "Oct 01, 2023",
-    },
-  ];
-
   const handleAddNewLocation = () => {
-    console.log("Add new location");
-    // TODO: Open modal or navigate to location creation form
+    setIsCreateLocationModalOpen(true);
+  };
+
+  const handleCreateLocationSubmit = async (formData) => {
+    try {
+      const result = await requestJson("/locations/", {
+        method: "POST",
+        body: JSON.stringify(formData),
+      });
+
+      if (result && result.id) {
+        alert("Location created successfully!");
+        setIsCreateLocationModalOpen(false);
+        // Refresh the locations list
+        const refreshResult = await requestJson(`/locations/`);
+        if (refreshResult && Array.isArray(refreshResult)) {
+          const mappedLocations = refreshResult.map((location) => ({
+            id: location.id,
+            name: location.name,
+          }));
+          setLocationsData(mappedLocations);
+        }
+      }
+    } catch (err) {
+      alert(err.message || "Failed to create location");
+      return Promise.reject(err);
+    }
+  };
+
+  const handleCancelCreateLocation = () => {
+    setIsCreateLocationModalOpen(false);
   };
 
   const handleLocationAction = (locationId) => {
@@ -72,98 +101,114 @@ function AdminLocationPage({ user, onNavChange, onLogout }) {
       user={user}
       onLogout={onLogout}
     >
-      <div className="admin-location-container">
-        {/* Top Breadcrumb */}
-        <div className="breadcrumb-section">
-          <span className="breadcrumb-text">Admin / Organisations</span>
-        </div>
-
+      <div className="admin-location-page">
         {/* Page Content */}
-        <div className="admin-content">
+        <div className="admin-locations-content">
           {/* Header Section */}
-          <div className="location-header">
-            <h1 className="location-title">Locations</h1>
+          <div className="locations-header">
+            <h1 className="header-title">Locations</h1>
             <button className="btn-add-location" onClick={handleAddNewLocation}>
               <span className="btn-icon">+</span>
-              <span>New Location</span>
+              <span>Add New Location</span>
             </button>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div
+              style={{
+                padding: "12px 16px",
+                marginBottom: "16px",
+                backgroundColor: "#fee2e2",
+                color: "#991b1b",
+                borderRadius: "4px",
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <div
+              style={{
+                padding: "24px",
+                textAlign: "center",
+                color: "#666",
+              }}
+            >
+              Loading locations...
+            </div>
+          )}
+
           {/* Locations Table */}
-          <div className="location-table-wrapper">
-            <table className="location-table">
-              <thead>
-                <tr className="table-header-row">
-                  <th className="table-header-cell cell-location">LOCATION</th>
-                  <th className="table-header-cell cell-asset-manager">ASSET MANAGER</th>
-                  <th className="table-header-cell cell-contractor">CONTRACTOR</th>
-                  <th className="table-header-cell cell-created">CREATED TIME</th>
-                  <th className="table-header-cell cell-updated">UPDATE TIME</th>
-                  <th className="table-header-cell cell-action"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {locationsData.map((location, idx) => (
-                  <tr key={idx} className="table-body-row">
-                    <td className="table-cell cell-location">
-                      <div className="location-cell">
-                        <div className="location-name">{location.location}</div>
-                        <div className="location-id">ID: {location.id}</div>
-                      </div>
-                    </td>
-                    <td className="table-cell cell-asset-manager">
-                      <span className="manager-name">{location.assetManager}</span>
-                    </td>
-                    <td className="table-cell cell-contractor">
-                      <span className="contractor-name">{location.contractor}</span>
-                    </td>
-                    <td className="table-cell cell-created">
-                      <div className="created-time">
-                        <div className="date">{location.createdTime}</div>
-                        <div className="time">{location.createdTimeDetailed}</div>
-                      </div>
-                    </td>
-                    <td className="table-cell cell-updated">
-                      <span className="update-time">{location.updateTime}</span>
-                    </td>
-                    <td className="table-cell cell-action">
-                      <button
-                        className="action-button"
-                        onClick={() => handleLocationAction(location.id)}
-                        title="More options"
-                      >
-                        ⋮
-                      </button>
-                    </td>
+          {!loading && !error && (
+            <div className="locations-table-wrapper">
+              <table className="locations-table">
+                <thead>
+                  <tr className="table-header-row">
+                    <th className="table-header-cell cell-location-id">LOCATION ID</th>
+                    <th className="table-header-cell cell-location-name">LOCATION NAME</th>
+                    <th className="table-header-cell cell-action"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {locationsData.length > 0 ? (
+                    locationsData.map((location, idx) => (
+                      <tr key={idx} className="table-body-row">
+                        <td className="table-cell cell-location-id">
+                          <span className="location-id">#{location.id}</span>
+                        </td>
+                        <td className="table-cell cell-location-name">
+                          <span className="location-name">{location.name}</span>
+                        </td>
+                        <td className="table-cell cell-action">
+                          <button
+                            className="action-button"
+                            onClick={() => handleLocationAction(location.id)}
+                            title="More options"
+                          >
+                            ⋮
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="3" style={{ textAlign: "center", padding: "24px", color: "#999" }}>
+                        No locations found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Pagination */}
-          <div className="pagination-section">
-            <div className="pagination-info">
-              <span>Displaying 1-4 of 12 registered organisations.</span>
+          {!loading && !error && (
+            <div className="pagination-section">
+              <div className="pagination-info">
+                <span>Total: {locationsData.length} location(s)</span>
+              </div>
             </div>
-            <div className="pagination-controls">
-              <button
-                className="pagination-btn prev-btn"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                ← Previous
-              </button>
-              <button
-                className="pagination-btn next-btn"
-                onClick={() => setCurrentPage(currentPage + 1)}
-              >
-                Next →
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
+
+      {/* Create Location Modal */}
+      <Modal
+        isOpen={isCreateLocationModalOpen}
+        title="Add New Location"
+        subtitle="Create a new location in the system"
+        onClose={handleCancelCreateLocation}
+        size="medium"
+      >
+        <CreateLocationForm
+          onSubmit={handleCreateLocationSubmit}
+          onCancel={handleCancelCreateLocation}
+        />
+      </Modal>
     </AppLayout>
   );
 }

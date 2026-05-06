@@ -112,7 +112,7 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
         <div className="admin-users-content">
           {/* Header Section */}
           <div className="users-header">
-            <h1 className="users-title">Users</h1>
+            <h1 className="header-title">Users</h1>
             <button className="btn-add-user" onClick={handleAddNewUser}>
               <span className="btn-icon">+</span>
               <span>Add New User</span>

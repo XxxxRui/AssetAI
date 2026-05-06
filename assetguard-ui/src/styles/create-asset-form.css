@@ -215,6 +215,15 @@
   border-top: 1px solid rgba(189, 201, 200, 0.15);
 }
 
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 0;
+}
+
 /* Cancel Button */
 .btn-cancel {
   background: none;
