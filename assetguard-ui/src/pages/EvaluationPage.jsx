@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import AppLayout from "../components/layout/AppLayout";
+import { sendEvaluationEmail } from "../services/alertsApi";
 import "../styles/evaluation.css";
 import imgIndustrialTurbine from "../assets/building.png";
 import { getAuthToken } from "../services/authSession";
@@ -565,9 +566,17 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                 {evaluationResult.status !== "Compliant" && (
                   <button 
                     className="btn btn-primary"
-                    onClick={() => {
-                      // TODO: Implement send email alert functionality
-                      alert("Sending email alert...");
+                    onClick={async () => {
+                      if (!evaluationResult?.evaluationId) {
+                        alert("Unable to send email: missing evaluation ID.");
+                        return;
+                      }
+                      try {
+                        const result = await sendEvaluationEmail(evaluationResult.evaluationId);
+                        alert(`Email sent. Success: ${result.sent}, Failed: ${result.failed}`);
+                      } catch (error) {
+                        alert(error.message || "Failed to send email.");
+                      }
                     }}
                   >
                     🔔 Send Email Alert

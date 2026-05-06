@@ -30,3 +30,8 @@ export function getEmailLogs() {
 export function sendTestEmail() {
   return requestJson("/alerts/test-email", { method: "POST" });
 }
+
+
+export function sendEvaluationEmail(evaluationId) {
+  return requestJson(`/evaluations/${evaluationId}/send-email`, { method: "POST" });
+}
