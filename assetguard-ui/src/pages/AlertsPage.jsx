@@ -18,6 +18,7 @@ const defaultPreferences = {
 const defaultTemplate = {
   subject: "[ASSETGUARD] THRESHOLD BREACH DETECTED",
   body: "A monitored asset has exceeded the configured load threshold. Please review the latest evaluation report immediately.",
+  bodyHtml: "<p>A monitored asset has exceeded the configured load threshold.</p><p>Please review the latest evaluation report immediately.</p>",
 };
 
 function AlertsPage() {
@@ -30,6 +31,7 @@ function AlertsPage() {
 
   const [subject, setSubject] = useState(defaultTemplate.subject);
   const [body, setBody] = useState(defaultTemplate.body);
+  const [bodyHtml, setBodyHtml] = useState(defaultTemplate.bodyHtml);
   const [templateSnapshot, setTemplateSnapshot] = useState(defaultTemplate);
 
   const [deliveryLogs, setDeliveryLogs] = useState([]);
@@ -89,9 +91,11 @@ function AlertsPage() {
         const nextTemplate = {
           subject: template.subject || defaultTemplate.subject,
           body: template.body || defaultTemplate.body,
+          bodyHtml: template.bodyHtml || defaultTemplate.bodyHtml,
         };
         setSubject(nextTemplate.subject);
         setBody(nextTemplate.body);
+        setBodyHtml(nextTemplate.bodyHtml);
         setTemplateSnapshot(nextTemplate);
       } else {
         setTemplateError("Unable to load email template.");
@@ -115,7 +119,9 @@ function AlertsPage() {
     alertsEnabled !== preferencesSnapshot.alertsEnabled;
 
   const isTemplateDirty =
-    subject !== templateSnapshot.subject || body !== templateSnapshot.body;
+    subject !== templateSnapshot.subject ||
+    body !== templateSnapshot.body ||
+    bodyHtml !== templateSnapshot.bodyHtml;
 
   const handleSavePreferences = async () => {
     if (isSavingPreferences || !isPreferencesDirty) return;
@@ -143,8 +149,8 @@ function AlertsPage() {
     setIsSavingTemplate(true);
     setTemplateError("");
     try {
-      await updateEmailTemplate({ subject, body });
-      setTemplateSnapshot({ subject, body });
+      await updateEmailTemplate({ subject, body, bodyHtml });
+      setTemplateSnapshot({ subject, body, bodyHtml });
     } catch (error) {
       setTemplateError(error.message || "Unable to save email template.");
     } finally {
@@ -306,6 +312,8 @@ function AlertsPage() {
         body={body}
         onSubjectChange={setSubject}
         onBodyChange={setBody}
+        bodyHtml={bodyHtml}
+        onBodyHtmlChange={setBodyHtml}
         onSaveTemplate={handleSaveTemplate}
         onSendTestEmail={handleSendTestEmail}
         isSavingTemplate={isSavingTemplate}

@@ -96,3 +96,11 @@ def dashboard_summary():
 
     data = EvaluationService.dashboard_summary(limit=limit)
     return ok(data)
+
+
+@evaluations_bp.post("/<int:evaluation_id>/send-email")
+@require_auth
+def send_email(evaluation_id: int):
+    ctx = get_auth_context()
+    data = EvaluationService.send_evaluation_email(evaluation_id=evaluation_id, requester_email=ctx.email)
+    return ok(data)

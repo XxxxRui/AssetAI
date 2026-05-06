@@ -34,7 +34,8 @@ _STORE = _DemoEmailStore(
     },
     template={
         "subject": "[AssetGuard] {status} - {assetName}",
-        "body": "Evaluation result: {status}\\nAsset: {assetName}\\nOverload: {overloadPercent}%",
+        "body": "Evaluation result: {status}\nAsset: {assetName}\nOverload: {overloadPercent}%",
+        "bodyHtml": "<p><strong>Evaluation result:</strong> {status}</p><p><strong>Asset:</strong> {assetName}</p><p><strong>Overload:</strong> {overloadPercent}%</p>",
     },
     logs=[],
 )
@@ -60,7 +61,7 @@ class AlertService:
 
     @staticmethod
     def update_template(payload: dict[str, Any]) -> dict[str, str]:
-        for key in ("subject", "body"):
+        for key in ("subject", "body", "bodyHtml"):
             if key in payload and isinstance(payload[key], str):
                 _STORE.template[key] = payload[key]
         return dict(_STORE.template)
@@ -78,6 +79,7 @@ class AlertService:
                     "maxPlanned": item.get("maxPlanned", "-"),
                     "overCap": item.get("overCap", "-"),
                     "sentAt": item.get("sentAt"),
+                    "errorMessage": item.get("errorMessage"),
                 }
             )
 
@@ -114,6 +116,20 @@ class AlertService:
             )
         return normalized[:limit]
 
+
+    @staticmethod
+    def render_template(*, status: str, asset_name: str, overload_percent: float) -> tuple[str, str, str]:
+        template_vars = {
+            "status": status,
+            "assetName": asset_name,
+            "overloadPercent": round(overload_percent, 2),
+        }
+        subject = _STORE.template["subject"].format(**template_vars)
+        body = _STORE.template["body"].format(**template_vars)
+        body_html_tpl = _STORE.template.get("bodyHtml") or _STORE.template["body"].replace("\n", "<br>")
+        body_html = body_html_tpl.format(**template_vars)
+        return subject, body, body_html
+
     @staticmethod
     def send_test_email() -> dict[str, Any]:
         recipients = [
@@ -125,13 +141,12 @@ class AlertService:
         recipient = recipients[0]
         asset_name = "Template Test Asset"
         status = "Delivered"
-        subject = _STORE.template["subject"].format(status="Test", assetName=asset_name)
-        body = _STORE.template["body"].format(status="Test", assetName=asset_name, overloadPercent=0)
+        subject, body, body_html = AlertService.render_template(status="Test", asset_name=asset_name, overload_percent=0)
 
         delivery_status = "Delivered"
         error = None
         try:
-            AlertService._send_email_smtp(recipient=recipient, subject=subject, body=body)
+            AlertService._send_email_smtp(recipient=recipient, subject=subject, body=body, body_html=body_html)
         except Exception as exc:
             delivery_status = "Failed"
             error = str(exc)
@@ -160,17 +175,16 @@ class AlertService:
             return
 
         for recipient in recipients:
-            subject = _STORE.template["subject"].format(status=status, assetName=asset_name)
-            body = _STORE.template["body"].format(
+            subject, body, body_html = AlertService.render_template(
                 status=status,
-                assetName=asset_name,
-                overloadPercent=round(overload_percent * 100, 2),
+                asset_name=asset_name,
+                overload_percent=overload_percent * 100,
             )
 
             delivery_status = "Delivered"
             error = None
             try:
-                AlertService._send_email_smtp(recipient=recipient, subject=subject, body=body)
+                AlertService._send_email_smtp(recipient=recipient, subject=subject, body=body, body_html=body_html)
             except Exception as exc:
                 delivery_status = "Failed"
                 error = str(exc)
@@ -220,7 +234,7 @@ class AlertService:
         }
 
     @staticmethod
-    def _send_email_smtp(*, recipient: str, subject: str, body: str) -> None:
+    def _send_email_smtp(*, recipient: str, subject: str, body: str, body_html: str | None = None) -> None:
         host = current_app.config.get("SMTP_HOST")
         port = int(current_app.config.get("SMTP_PORT", 587))
         username = current_app.config.get("SMTP_USERNAME")
@@ -229,14 +243,20 @@ class AlertService:
         use_tls = bool(current_app.config.get("SMTP_USE_TLS", True))
         suppress_send = bool(current_app.config.get("SMTP_SUPPRESS_SEND", True))
 
-        if suppress_send or not host or not from_email:
-            return
+        if suppress_send:
+            raise RuntimeError("SMTP_SUPPRESS_SEND=true, email sending is disabled")
+        if not host:
+            raise RuntimeError("SMTP host is not configured")
+        if not from_email:
+            raise RuntimeError("SMTP from email is not configured")
 
         msg = EmailMessage()
         msg["From"] = from_email
         msg["To"] = recipient
         msg["Subject"] = subject
         msg.set_content(body)
+        if body_html:
+            msg.add_alternative(body_html, subtype="html")
 
         with smtplib.SMTP(host, port, timeout=10) as smtp:
             if use_tls:

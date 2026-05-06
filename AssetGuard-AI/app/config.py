@@ -23,11 +23,11 @@ class Config:
         str(Path(__file__).resolve().parents[2] / "gjp-assetguard-extraction-tool" / "uploads"),
     )
 
-    # Lightweight demo email settings
-    SMTP_SUPPRESS_SEND = os.getenv("SMTP_SUPPRESS_SEND", "true").lower() == "true"
-    SMTP_HOST = os.getenv("SMTP_HOST")
-    SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-    SMTP_USERNAME = os.getenv("SMTP_USERNAME")
-    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-    SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL")
+    # SMTP settings (defaults point to Mailtrap sandbox for testing)
+    SMTP_SUPPRESS_SEND = os.getenv("SMTP_SUPPRESS_SEND", "false").lower() == "true"
+    SMTP_HOST = os.getenv("SMTP_HOST", os.getenv("MAIL_SERVER", "sandbox.smtp.mailtrap.io"))
+    SMTP_PORT = int(os.getenv("SMTP_PORT", os.getenv("MAIL_PORT", "2525")))
+    SMTP_USERNAME = os.getenv("SMTP_USERNAME", os.getenv("MAIL_USERNAME", "2096e750101120"))
+    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", os.getenv("MAIL_PASSWORD", "2811e435f6d0b5"))
+    SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "noreply@assetguard.local")
     SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true").lower() == "true"

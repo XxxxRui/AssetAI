@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 function TemplateEditorModal({
   open,
   onClose,
@@ -12,14 +14,31 @@ function TemplateEditorModal({
   disableSavePreferences,
   subject,
   body,
+  bodyHtml,
   onSubjectChange,
   onBodyChange,
+  onBodyHtmlChange,
   onSaveTemplate,
   onSendTestEmail,
   isSavingTemplate,
   disableSaveTemplate,
   isSendingTestEmail,
 }) {
+
+  const editorRef = useRef(null);
+
+  const applyFormat = (command) => {
+    document.execCommand(command, false);
+    if (editorRef.current) onBodyHtmlChange(editorRef.current.innerHTML);
+  };
+
+  const insertVariable = (variable) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand("insertText", false, variable);
+    onBodyHtmlChange(editorRef.current.innerHTML);
+  };
+
   if (!open) {
     return null;
   }
@@ -93,13 +112,38 @@ function TemplateEditorModal({
               />
             </label>
             <label className="alerts-field">
-              <span className="alerts-label">BODY</span>
+              <span className="alerts-label">BODY (TEXT)</span>
               <textarea
-                rows="8"
+                rows="6"
                 value={body}
                 onChange={(event) => onBodyChange(event.target.value)}
               />
             </label>
+
+            <div className="alerts-field">
+              <span className="alerts-label">BODY (RICH HTML)</span>
+              <div style={{ display: "flex", gap: "8px", marginBottom: "8px", flexWrap: "wrap" }}>
+                <button type="button" className="section-action" onClick={() => applyFormat("bold")}>B</button>
+                <button type="button" className="section-action" onClick={() => applyFormat("italic")}>I</button>
+                <button type="button" className="section-action" onClick={() => applyFormat("insertUnorderedList")}>• List</button>
+                <button type="button" className="section-action" onClick={() => insertVariable("{assetName}")}>{"{assetName}"}</button>
+                <button type="button" className="section-action" onClick={() => insertVariable("{status}")}>{"{status}"}</button>
+                <button type="button" className="section-action" onClick={() => insertVariable("{overloadPercent}")}>{"{overloadPercent}"}</button>
+              </div>
+              <div
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                style={{ minHeight: "160px", border: "1px solid #c8c8c8", borderRadius: "8px", padding: "10px", background: "#fff" }}
+                dangerouslySetInnerHTML={{ __html: bodyHtml || "" }}
+                onInput={(event) => onBodyHtmlChange(event.currentTarget.innerHTML)}
+              />
+            </div>
+
+            <div className="alerts-field">
+              <span className="alerts-label">PREVIEW</span>
+              <div style={{ minHeight: "120px", border: "1px solid #e0e0e0", borderRadius: "8px", padding: "10px", background: "#fafafa" }} dangerouslySetInnerHTML={{ __html: bodyHtml || "" }} />
+            </div>
 
             <div className="alerts-actions">
               <button
