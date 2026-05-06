@@ -101,7 +101,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
 
         // Fetch assets for selected location
         const response = await fetch(
-          `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=100`,
+          `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=${currentPage}&pageSize=10`,
           {
             method: "GET",
             headers: {
@@ -218,7 +218,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
         if (results.createdCount > 0 && selectedLocationId) {
           try {
             const refreshResponse = await fetch(
-              `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=100`,
+              `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=10`,
               {
                 method: "GET",
                 headers: {
@@ -287,7 +287,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
         console.log("Refreshing assets list...");
         
         const refreshResponse = await fetch(
-          `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=100`,
+          `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=10`,
           {
             method: "GET",
             headers: {
@@ -374,11 +374,9 @@ function AssetsPage({ user, onNavChange, onLogout }) {
           </div>
           <div className="header-actions">
             <button className="btn-secondary" onClick={handleBatchImport}>
-              <span className="icon">📥</span>
               <span>Batch Import</span>
             </button>
             <button className="btn-primary" onClick={handleCreateAsset}>
-              <span className="icon">➕</span>
               <span>Create New Asset</span>
             </button>
           </div>
@@ -528,6 +526,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
                 <button
                   className="pagination-button"
                   onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={filteredAssets.length < 10}
                 >
                   →
                 </button>

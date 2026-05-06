@@ -8,9 +8,12 @@ import "../styles/admin-location.css";
 function AdminLocationPage({ user, onNavChange, onLogout }) {
   const [activeNav, setActiveNav] = useState("Admin/Location");
   const [locationsData, setLocationsData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCreateLocationModalOpen, setIsCreateLocationModalOpen] = useState(false);
+  const [totalLocations, setTotalLocations] = useState(0);
+  const PAGE_SIZE = 10;
 
   // Fetch locations from backend
   useEffect(() => {
@@ -31,6 +34,7 @@ function AdminLocationPage({ user, onNavChange, onLogout }) {
 
           console.log("Mapped Locations:", mappedLocations);
           setLocationsData(mappedLocations);
+          setTotalLocations(mappedLocations.length);
         } else {
           console.warn("Unexpected response format:", result);
           setError("Unexpected response format from server");
@@ -154,7 +158,7 @@ function AdminLocationPage({ user, onNavChange, onLogout }) {
                 </thead>
                 <tbody>
                   {locationsData.length > 0 ? (
-                    locationsData.map((location, idx) => (
+                    locationsData.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((location, idx) => (
                       <tr key={idx} className="table-body-row">
                         <td className="table-cell cell-location-id">
                           <span className="location-id">#{location.id}</span>
@@ -182,15 +186,32 @@ function AdminLocationPage({ user, onNavChange, onLogout }) {
                   )}
                 </tbody>
               </table>
-            </div>
-          )}
 
-          {/* Pagination */}
-          {!loading && !error && (
-            <div className="pagination-section">
-              <div className="pagination-info">
-                <span>Total: {locationsData.length} location(s)</span>
-              </div>
+              {/* Pagination */}
+              {!loading && !error && (
+                <div className="pagination-container">
+                  <div className="pagination-info">
+                    <span>Showing {locationsData.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0}-{Math.min(currentPage * PAGE_SIZE, totalLocations)} of {totalLocations} location(s)</span>
+                  </div>
+                  <div className="pagination-controls">
+                    <button
+                      className="pagination-button"
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      ←
+                    </button>
+                    <span className="pagination-number">{currentPage}</span>
+                    <button
+                      className="pagination-button"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage * PAGE_SIZE >= totalLocations}
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

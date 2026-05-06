@@ -39,7 +39,7 @@ function HistoryPage({ user, onNavChange, onLogout }) {
 
         const params = new URLSearchParams();
         params.append("page", currentPage.toString());
-        params.append("pageSize", "20");
+        params.append("pageSize", "10");
 
         const response = await fetch(
           `http://127.0.0.1:5000/api/v1/evaluations/history?${params}`,
@@ -157,7 +157,8 @@ function HistoryPage({ user, onNavChange, onLogout }) {
             </div>
           )}
           {!loading && evaluationData.length > 0 && (
-            <table className="history-table">
+            <div className="history-table-container">
+              <table className="history-table">
               <thead>
                 <tr className="table-header-row">
                   <th className="table-header-cell table-cell-id">EVALUATION ID</th>
@@ -233,50 +234,32 @@ function HistoryPage({ user, onNavChange, onLogout }) {
                 })}
               </tbody>
             </table>
-          )}
-        </div>
 
-        {/* Pagination */}
-        <div className="pagination-container">
-          <div className="pagination-info">
-            <span>SHOWING 1 TO {evaluationData.length} OF {totalItems} ENTRIES</span>
-          </div>
-          <div className="pagination-controls">
-            <button
-              className="pagination-btn"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1 || loading}
-            >
-              ←
-            </button>
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => (
-              <button 
-                key={i + 1} 
-                className={`pagination-btn ${currentPage === i + 1 ? 'active' : ''}`}
-                onClick={() => setCurrentPage(i + 1)}
-                disabled={loading}
-              >
-                {i + 1}
-              </button>
-            ))}
-            {totalPages > 5 && <span className="pagination-ellipsis">...</span>}
-            {totalPages > 5 && (
-              <button 
-                className={`pagination-btn ${currentPage === totalPages ? 'active' : ''}`}
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={loading}
-              >
-                {totalPages}
-              </button>
-            )}
-            <button
-              className="pagination-btn"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages || loading}
-            >
-              →
-            </button>
-          </div>
+            {/* Pagination */}
+            <div className="pagination-container">
+              <div className="pagination-info">
+                <span>Showing {evaluationData.length} of {totalItems} evaluations</span>
+              </div>
+              <div className="pagination-controls">
+                <button
+                  className="pagination-button"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1 || loading}
+                >
+                  ←
+                </button>
+                <span className="pagination-number">{currentPage}</span>
+                <button
+                  className="pagination-button"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages || loading}
+                >
+                  →
+                </button>
+              </div>
+            </div>
+            </div>
+          )}
         </div>
       </div>
     </AppLayout>

@@ -15,7 +15,7 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
   const [error, setError] = useState(null);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
 
-  const PAGE_SIZE = 5;
+  const PAGE_SIZE = 10;
 
   // Fetch users from backend
   useEffect(() => {
@@ -207,50 +207,35 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
                   )}
                 </tbody>
               </table>
-            </div>
-          )}
 
-          {/* Pagination */}
-          {!loading && !error && (
-            <div className="pagination-section">
-              <div className="pagination-info">
-                <span>
-                  Showing {usersData.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0}-
-                  {Math.min(currentPage * PAGE_SIZE, totalUsers)} of {totalUsers} users
-                </span>
-              </div>
-              <div className="pagination-controls">
-                <button
-                  className="pagination-btn prev-btn"
-                  onClick={handlePrevPage}
-                  disabled={currentPage === 1}
-                >
-                  ←
-                </button>
-                {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => (
-                  <button
-                    key={i + 1}
-                    className={`pagination-btn ${currentPage === i + 1 ? "active" : ""}`}
-                    onClick={() => setCurrentPage(i + 1)}
-                    style={{ display: i + 1 <= totalPages ? "block" : "none" }}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-                {totalPages > 3 && <span className="pagination-ellipsis">...</span>}
-                {totalPages > 3 && (
-                  <button className="pagination-btn" onClick={() => setCurrentPage(totalPages)}>
-                    {totalPages}
-                  </button>
-                )}
-                <button
-                  className="pagination-btn next-btn"
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                >
-                  →
-                </button>
-              </div>
+              {/* Pagination */}
+              {!loading && !error && (
+                <div className="pagination-container">
+                  <div className="pagination-info">
+                    <span>
+                      Showing {usersData.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0}-
+                      {Math.min(currentPage * PAGE_SIZE, totalUsers)} of {totalUsers} users
+                    </span>
+                  </div>
+                  <div className="pagination-controls">
+                    <button
+                      className="pagination-button"
+                      onClick={handlePrevPage}
+                      disabled={currentPage === 1}
+                    >
+                      ←
+                    </button>
+                    <span className="pagination-number">{currentPage}</span>
+                    <button
+                      className="pagination-button"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -459,7 +459,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                 onClick={handleEvaluate}
                 disabled={evaluating}
               >
-                {evaluating ? "⏳ Evaluating..." : "⚡ Evaluate Asset"}
+                {evaluating ? "Evaluating..." : "Evaluate Asset"}
               </button>
             </div>
           </div>

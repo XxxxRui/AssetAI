@@ -1,11 +1,5 @@
-/* ============================================================
-   Evaluation Page — Enterprise Tech
-   ============================================================ */
-
 .evaluation-container {
-  padding: var(--space-12) var(--space-8) var(--space-10);
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: 100%;
   animation: fadeInUp 0.35s ease both;
 }
 
@@ -253,7 +247,7 @@
   .signature-content { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .evaluation-container { padding: var(--space-6) var(--space-4); }
+  .header-title { font-size: var(--text-2xl); }
   .form-grid { grid-template-columns: 1fr; }
   .result-footer { flex-direction: column; gap: var(--space-4); align-items: flex-start; }
   .result-actions { width: 100%; flex-direction: column; }
