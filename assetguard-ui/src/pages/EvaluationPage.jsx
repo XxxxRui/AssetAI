@@ -573,7 +573,16 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                       }
                       try {
                         const result = await sendEvaluationEmail(evaluationResult.evaluationId);
-                        alert(`Email sent. Success: ${result.sent}, Failed: ${result.failed}`);
+                        if (result.failed > 0) {
+                          const failedLines = (result.failedRecipients || [])
+                            .map((item) => `- ${item.email}: ${item.error}`)
+                            .join("\n");
+                          alert(
+                            `Email sent. Success: ${result.sent}, Failed: ${result.failed}\n\nFailed recipients:\n${failedLines}`
+                          );
+                        } else {
+                          alert(`Email sent. Success: ${result.sent}, Failed: ${result.failed}`);
+                        }
                       } catch (error) {
                         alert(error.message || "Failed to send email.");
                       }

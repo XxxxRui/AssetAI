@@ -150,20 +150,31 @@ class EvaluationService:
 
         sent = 0
         failed = 0
+        sent_recipients: list[str] = []
+        failed_recipients: list[dict[str, str]] = []
         for recipient in deduped_recipients:
             try:
                 AlertService._send_email_smtp(recipient=recipient, subject=subject, body=body)
                 sent += 1
-            except Exception:
+                sent_recipients.append(recipient)
+            except Exception as exc:
                 failed += 1
+                failed_recipients.append({"email": recipient, "error": str(exc)})
 
         if sent == 0 and failed > 0:
-            raise ApiError("Email delivery failed. Please check SMTP configuration.", 502, code="smtp_send_failed")
+            raise ApiError(
+                "Email delivery failed. Please check SMTP configuration.",
+                502,
+                code="smtp_send_failed",
+                details={"failedRecipients": failed_recipients},
+            )
 
         return {
             "evaluationId": log.id,
             "status": status,
             "recipients": deduped_recipients,
+            "sentRecipients": sent_recipients,
+            "failedRecipients": failed_recipients,
             "sent": sent,
             "failed": failed,
         }
