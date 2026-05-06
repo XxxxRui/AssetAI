@@ -26,6 +26,8 @@ class AuthService:
                 "email": user.email,
                 "role": user.role.value,
                 "isFirstLogin": user.is_first_login,
+                "createdAt": user.created_at.isoformat(),
+                "updatedAt": user.updated_at.isoformat(),
             },
         }
 

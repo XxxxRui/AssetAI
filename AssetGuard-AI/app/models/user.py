@@ -1,8 +1,13 @@
 import enum
+from datetime import datetime, timezone
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class UserRole(str, enum.Enum):
@@ -23,6 +28,8 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.Enum(UserRole), nullable=False, default=UserRole.CONTRACTORS)
     is_first_login = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=_utc_now)
+    updated_at = db.Column(db.DateTime, nullable=False, default=_utc_now, onupdate=_utc_now)
 
     def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)

@@ -512,6 +512,81 @@ Create a new location.
 | `403` | — | Caller lacks permission |
 | `409` | `location_exists` | Location name already exists |
 
+**Response fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | number | Location ID |
+| `name` | string | Location name |
+| `createdAt` | string (ISO 8601) | Creation timestamp (UTC) |
+| `updatedAt` | string (ISO 8601) | Last update timestamp (UTC) |
+
+---
+
+### PUT `/api/v1/locations/<location_id>`
+
+Rename an existing location.
+
+**Permissions:** `System_Admin`, `Asset_Manager`.
+
+**Request body:**
+
+```json
+{
+  "name": "South Wharf"
+}
+```
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 3,
+    "name": "South Wharf",
+    "createdAt": "2026-05-06T10:30:00+00:00",
+    "updatedAt": "2026-05-06T12:15:00+00:00"
+  }
+}
+```
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `400` | `validation_error` | `name` is missing or blank |
+| `403` | — | Caller lacks permission |
+| `404` | `location_not_found` | Location does not exist |
+| `409` | `location_exists` | Another location already has this name |
+
+---
+
+### DELETE `/api/v1/locations/<location_id>`
+
+Delete a location. Fails if assets still reference it.
+
+**Permissions:** `System_Admin` only.
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "deleted": true
+  }
+}
+```
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `403` | — | Caller lacks permission |
+| `404` | `location_not_found` | Location does not exist |
+| `409` | `location_has_assets` | Cannot delete — assets still reference this location |
+
 ---
 
 ## Asset APIs

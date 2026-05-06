@@ -410,6 +410,8 @@ Authorization: Bearer <manager_or_admin_token>
 |--------|------|------------|
 | `GET` | `/api/v1/locations/` | Any authenticated user |
 | `POST` | `/api/v1/locations/` | `System_Admin`, `Asset_Manager` |
+| `PUT` | `/api/v1/locations/<id>` | `System_Admin`, `Asset_Manager` |
+| `DELETE` | `/api/v1/locations/<id>` | `System_Admin` |
 
 ### Assets
 

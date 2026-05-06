@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from pathlib import Path
 
@@ -13,6 +14,12 @@ from app.utils.equipment_mapping import (
     validate_capacity_metric_pair,
 )
 from app.utils.errors import ApiError
+
+
+def _iso(dt: datetime) -> str:
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone().replace(microsecond=0).isoformat()
 
 
 class AssetService:
@@ -110,6 +117,8 @@ class AssetService:
                     "metric": c.metric.value,
                     "maxLoad": c.max_load,
                     "details": c.details,
+                    "createdAt": _iso(c.created_at),
+                    "updatedAt": _iso(c.updated_at),
                 }
                 for c in sorted(a.load_capacities, key=lambda x: x.id)
             ]
@@ -119,6 +128,8 @@ class AssetService:
                     "name": a.name,
                     "locationId": a.location_id,
                     "loadCapacities": caps,
+                    "createdAt": _iso(a.created_at),
+                    "updatedAt": _iso(a.updated_at),
                 }
             )
 
@@ -143,6 +154,8 @@ class AssetService:
                 "id": a.id,
                 "name": a.name,
                 "locationId": a.location_id,
+                "createdAt": _iso(a.created_at),
+                "updatedAt": _iso(a.updated_at),
             }
             for a in pagination.items
         ]
@@ -312,11 +325,19 @@ class AssetService:
                 "metric": c.metric.value,
                 "maxLoad": c.max_load,
                 "details": c.details,
+                "createdAt": _iso(c.created_at),
+                "updatedAt": _iso(c.updated_at),
             }
             for c in sorted(asset.load_capacities, key=lambda x: x.id)
         ]
         return {
-            "asset": {"id": asset.id, "name": asset.name, "locationId": asset.location_id},
+            "asset": {
+                "id": asset.id,
+                "name": asset.name,
+                "locationId": asset.location_id,
+                "createdAt": _iso(asset.created_at),
+                "updatedAt": _iso(asset.updated_at),
+            },
             "items": items,
         }
 
@@ -360,13 +381,21 @@ class AssetService:
         db.session.add(cap)
         db.session.commit()
         return {
-            "asset": {"id": asset.id, "name": asset.name, "locationId": asset.location_id},
+            "asset": {
+                "id": asset.id,
+                "name": asset.name,
+                "locationId": asset.location_id,
+                "createdAt": _iso(asset.created_at),
+                "updatedAt": _iso(asset.updated_at),
+            },
             "capacity": {
                 "id": cap.id,
                 "name": cap.name.value,
                 "metric": cap.metric.value,
                 "maxLoad": cap.max_load,
                 "details": cap.details,
+                "createdAt": _iso(cap.created_at),
+                "updatedAt": _iso(cap.updated_at),
             },
         }
 
@@ -402,13 +431,21 @@ class AssetService:
 
         db.session.commit()
         return {
-            "asset": {"id": asset.id, "name": asset.name, "locationId": asset.location_id},
+            "asset": {
+                "id": asset.id,
+                "name": asset.name,
+                "locationId": asset.location_id,
+                "createdAt": _iso(asset.created_at),
+                "updatedAt": _iso(asset.updated_at),
+            },
             "capacity": {
                 "id": cap.id,
                 "name": cap.name.value,
                 "metric": cap.metric.value,
                 "maxLoad": cap.max_load,
                 "details": cap.details,
+                "createdAt": _iso(cap.created_at),
+                "updatedAt": _iso(cap.updated_at),
             },
         }
 
@@ -475,6 +512,8 @@ class AssetService:
                 "metric": c.metric.value,
                 "maxLoad": c.max_load,
                 "details": c.details,
+                "createdAt": _iso(c.created_at),
+                "updatedAt": _iso(c.updated_at),
             }
             for c in sorted(asset.load_capacities, key=lambda x: x.id)
         ]
@@ -483,4 +522,6 @@ class AssetService:
             "name": asset.name,
             "locationId": asset.location_id,
             "loadCapacities": caps,
+            "createdAt": _iso(asset.created_at),
+            "updatedAt": _iso(asset.updated_at),
         }

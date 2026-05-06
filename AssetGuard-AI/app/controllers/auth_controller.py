@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from flask import Blueprint, request
 
 from app.models.user import UserRole
@@ -5,6 +7,12 @@ from app.services.auth_service import AuthService
 from app.utils.auth import get_auth_context, require_roles
 from app.utils.errors import ApiError
 from app.utils.responses import ok
+
+def _iso(dt: datetime) -> str:
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone().replace(microsecond=0).isoformat()
+
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -108,6 +116,8 @@ def create_user():
             "email": user.email,
             "role": user.role.value,
             "isFirstLogin": user.is_first_login,
+            "createdAt": _iso(user.created_at),
+            "updatedAt": _iso(user.updated_at),
         },
         status_code=201,
     )
@@ -137,6 +147,8 @@ def list_users():
                     "email": user.email,
                     "role": user.role.value,
                     "isFirstLogin": user.is_first_login,
+                    "createdAt": _iso(user.created_at),
+                    "updatedAt": _iso(user.updated_at),
                 }
                 for user in users
             ],
@@ -181,6 +193,8 @@ def update_user(user_id: int):
         "email": user.email,
         "role": user.role.value,
         "isFirstLogin": user.is_first_login,
+        "createdAt": _iso(user.created_at),
+        "updatedAt": _iso(user.updated_at),
     })
 
 

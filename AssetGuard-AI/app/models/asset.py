@@ -1,4 +1,10 @@
+from datetime import datetime, timezone
+
 from app.extensions import db
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class Asset(db.Model):
@@ -14,3 +20,6 @@ class Asset(db.Model):
 
     location_id = db.Column(db.Integer, db.ForeignKey("locations.id"), nullable=False, index=True)
     location = db.relationship("Location", backref=db.backref("assets", lazy=True))
+
+    created_at = db.Column(db.DateTime, nullable=False, default=_utc_now)
+    updated_at = db.Column(db.DateTime, nullable=False, default=_utc_now, onupdate=_utc_now)
