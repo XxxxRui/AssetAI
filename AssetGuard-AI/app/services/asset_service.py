@@ -422,6 +422,51 @@ class AssetService:
         db.session.commit()
 
     @staticmethod
+    def update_asset(
+        *,
+        asset_id: int,
+        name: str | None,
+        location_name: str | None,
+    ) -> dict:
+        asset = AssetService._get_asset(asset_id=asset_id)
+
+        if name is not None:
+            n = name.strip()
+            if not n:
+                raise ApiError("name must not be empty", 400, code="validation_error")
+            asset.name = n
+
+        if location_name is not None:
+            loc = AssetService._resolve_or_create_location(location_name=location_name)
+            asset.location_id = loc.id
+
+        if name is not None or location_name is not None:
+            existing = Asset.query.filter(
+                Asset.location_id == asset.location_id,
+                Asset.name == asset.name,
+                Asset.id != asset.id,
+            ).first()
+            if existing is not None:
+                raise ApiError(
+                    "Asset with the same location and name already exists",
+                    409,
+                    code="asset_already_exists",
+                )
+
+        db.session.commit()
+        db.session.refresh(asset)
+        return AssetService._asset_to_dict(asset)
+
+    @staticmethod
+    def delete_asset(*, asset_id: int) -> None:
+        asset = AssetService._get_asset(asset_id=asset_id)
+        from app.models.evaluation_log import EvaluationLog
+        EvaluationLog.query.filter_by(asset_id=asset_id).delete()
+        LoadCapacity.query.filter_by(asset_id=asset_id).delete()
+        db.session.delete(asset)
+        db.session.commit()
+
+    @staticmethod
     def _asset_to_dict(asset: Asset) -> dict:
         caps = [
             {

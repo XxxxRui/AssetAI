@@ -1,5 +1,6 @@
 from app.extensions import db
 from app.models import User
+from app.models.user import UserRole
 from app.utils.auth import issue_token
 from app.utils.errors import ApiError
 
@@ -111,5 +112,65 @@ class AuthService:
         query = User.query.order_by(User.id.desc())
         total = query.count()
         users = query.limit(page_size).offset((page - 1) * page_size).all()
-        
+
         return users, total
+
+    @staticmethod
+    def _get_user(user_id: int) -> User:
+        user = User.query.filter_by(id=user_id).first()
+        if user is None:
+            raise ApiError("User not found", 404, code="user_not_found")
+        return user
+
+    @staticmethod
+    def update_user(
+        *,
+        user_id: int,
+        email: str | None,
+        role: str | None,
+        password: str | None,
+    ) -> User:
+        user = AuthService._get_user(user_id)
+
+        if email is not None:
+            e = email.strip()
+            if not e:
+                raise ApiError("email must not be empty", 400, code="validation_error")
+            existing = User.query.filter(User.email == e, User.id != user_id).first()
+            if existing is not None:
+                raise ApiError("Email already exists", 409, code="email_exists")
+            user.email = e
+
+        if role is not None:
+            try:
+                user.role = UserRole(role)
+            except ValueError:
+                raise ApiError(
+                    "Invalid role; allowed: System_Admin, Asset_Manager, Contractors",
+                    400,
+                    code="validation_error",
+                )
+
+        if password is not None:
+            if not password:
+                raise ApiError("password must not be empty", 400, code="validation_error")
+            user.set_password(password)
+            user.is_first_login = True
+
+        if email is None and role is None and password is None:
+            raise ApiError(
+                "At least one of email, role, or password must be provided",
+                400,
+                code="validation_error",
+            )
+
+        db.session.commit()
+        return user
+
+    @staticmethod
+    def delete_user(*, user_id: int, current_user_id: int) -> None:
+        if user_id == current_user_id:
+            raise ApiError("Cannot delete your own account", 400, code="cannot_delete_self")
+        user = AuthService._get_user(user_id)
+        db.session.delete(user)
+        db.session.commit()

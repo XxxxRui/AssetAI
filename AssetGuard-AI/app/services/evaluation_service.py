@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from sqlalchemy import select
 
@@ -117,11 +117,38 @@ class EvaluationService:
         }
 
     @staticmethod
-    def history(*, page: int, page_size: int) -> dict:
-        stmt = (
-            select(EvaluationLog)
-            .order_by(EvaluationLog.evaluated_at.desc(), EvaluationLog.id.desc())
-        )
+    def history(
+        *,
+        page: int,
+        page_size: int,
+        asset_id: int | None = None,
+        equipment: str | None = None,
+        status: str | None = None,
+        from_date: date | None = None,
+        to_date: date | None = None,
+    ) -> dict:
+        stmt = select(EvaluationLog)
+
+        if asset_id is not None:
+            stmt = stmt.where(EvaluationLog.asset_id == asset_id)
+        if equipment is not None:
+            stmt = stmt.where(EvaluationLog.equipment == equipment)
+        if status is not None:
+            try:
+                status_enum = EvaluationStatus(status)
+            except ValueError:
+                raise ApiError(
+                    f"Invalid status value; allowed: {[s.value for s in EvaluationStatus]}",
+                    400,
+                    code="validation_error",
+                )
+            stmt = stmt.where(EvaluationLog.status == status_enum)
+        if from_date is not None:
+            stmt = stmt.where(EvaluationLog.evaluated_at >= from_date)
+        if to_date is not None:
+            stmt = stmt.where(EvaluationLog.evaluated_at < to_date)
+
+        stmt = stmt.order_by(EvaluationLog.evaluated_at.desc(), EvaluationLog.id.desc())
         pagination = db.paginate(stmt, page=page, per_page=page_size, error_out=False)
         items = [
             {
