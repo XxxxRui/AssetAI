@@ -96,3 +96,20 @@ class AuthService:
         user.set_password(new_password)
         user.is_first_login = False
         db.session.commit()
+
+    @staticmethod
+    def list_users(*, page: int = 1, page_size: int = 20) -> tuple:
+        """
+        List all users with pagination.
+        Returns (users, total_count).
+        """
+        if page < 1:
+            raise ApiError("page must be >= 1", 400, code="validation_error")
+        if page_size < 1 or page_size > 200:
+            raise ApiError("pageSize must be between 1 and 200", 400, code="validation_error")
+
+        query = User.query.order_by(User.id.desc())
+        total = query.count()
+        users = query.limit(page_size).offset((page - 1) * page_size).all()
+        
+        return users, total

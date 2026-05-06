@@ -1,11 +1,11 @@
 /* Admin Users Page Styles */
 
-.admin-users-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: #fbf9f8;
+.admin-users-page {
+  padding: 48px 32px 40px;
+  max-width: 1280px;
+  margin: 0 auto;
 }
+
 
 /* Breadcrumb Section */
 .breadcrumb-section {
@@ -36,26 +36,26 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 64px;
+  margin-bottom: 48px;
   gap: 32px;
 }
 
 .users-title {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 56px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -2.24px;
   color: #1b1c1c;
   margin: 0;
-  line-height: 61.6px;
+  line-height: 70px;
 }
 
 .btn-add-user {
   background: #006767;
   color: white;
   border: none;
-  padding: 16px 32px;
-  border-radius: 6px;
+  padding: 12px 24px;
+  border-radius: 4px;
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 14px;
   font-weight: 600;
@@ -77,9 +77,8 @@
 
 /* Users Table Container */
 .users-table-wrapper {
-  background: white;
+  background: #f5f3f3;
   border-radius: 8px;
-  padding: 4px;
   overflow: hidden;
   margin-bottom: 32px;
 }
@@ -92,31 +91,32 @@
 
 /* Table Header */
 .table-header-row {
-  background: #f5f3f3;
+  background: rgba(233, 232, 231, 0.5);
+  border-bottom: none;
 }
 
 .table-header-cell {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 1.2px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.55px;
   text-transform: uppercase;
-  color: #3e4949;
+  color: #6d7979;
   text-align: left;
-  padding: 24px;
-  vertical-align: middle;
+  padding: 20px 32px;
 }
 
 .cell-user-id {
-  width: 87.41px;
+  width: 100px;
 }
 
 .cell-name {
-  width: 120.39px;
+  width: auto;
+  flex: 1;
 }
 
 .cell-role {
-  width: 136.77px;
+  width: 150px;
 }
 
 .cell-org {
@@ -132,11 +132,11 @@
 }
 
 .cell-status {
-  width: 127.5px;
+  width: 150px;
 }
 
 .cell-action {
-  width: 92.03px;
+  width: 80px;
 }
 
 /* Table Body */
@@ -150,7 +150,7 @@
 }
 
 .table-cell {
-  padding: 24px;
+  padding: 24px 32px;
   vertical-align: middle;
 }
 
@@ -166,31 +166,13 @@
 .user-name {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   color: #1b1c1c;
   display: block;
   line-height: 20px;
 }
 
 .user-role {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: #3e4949;
-  display: block;
-  line-height: 20px;
-}
-
-.user-org {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: #3e4949;
-  display: block;
-  line-height: 20px;
-}
-
-.user-date {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 14px;
   font-weight: 400;
@@ -209,7 +191,7 @@
 .status-dot {
   width: 8px;
   height: 8px;
-  border-radius: 12px;
+  border-radius: 50%;
   display: inline-block;
   flex-shrink: 0;
 }
@@ -229,7 +211,7 @@
   font-size: 16px;
   cursor: pointer;
   color: #3e4949;
-  padding: 24px;
+  padding: 8px;
   transition: color 0.2s ease;
 }
 
@@ -303,65 +285,6 @@
   padding: 0 4px;
 }
 
-/* Responsive Design */
-@media (max-width: 1200px) {
-  .admin-content {
-    padding: 32px 24px;
-  }
-
-  .users-title {
-    font-size: 40px;
-    line-height: 48px;
-    letter-spacing: -1.6px;
-  }
-
-  .table-header-cell,
-  .table-cell {
-    padding: 12px 16px;
-  }
-}
-
-@media (max-width: 768px) {
-  .admin-users-container {
-    min-height: auto;
-  }
-
-  .admin-content {
-    padding: 24px 16px;
-  }
-
-  .users-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-
-  .btn-add-user {
-    width: 100%;
-    justify-content: center;
-    padding: 12px 24px;
-  }
-
-  .users-title {
-    font-size: 32px;
-    line-height: 40px;
-  }
-
-  .pagination-section {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
-  }
-
-  .pagination-controls {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  /* Hide some columns on tablet */
-  .cell-created,
-  .table-header-cell.cell-created {
     display: none;
   }
 
