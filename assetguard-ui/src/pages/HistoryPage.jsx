@@ -86,8 +86,8 @@ function HistoryPage({ user, onNavChange, onLogout }) {
 
   const getStatusStyle = (status) => {
     return status === "Compliant"
-      ? { bg: "#d1fae5", color: "#047857" }
-      : { bg: "#fee2e2", color: "#dc2626" };
+      ? { bg: "rgba(125, 154, 122, 0.12)", color: "#047857" }
+      : { bg: "rgba(192, 96, 74, 0.12)", color: "#c0604a" };
   };
 
   const formatDate = (dateString) => {
@@ -129,7 +129,7 @@ function HistoryPage({ user, onNavChange, onLogout }) {
             <div style={{
               padding: "12px 16px",
               marginBottom: "20px",
-              backgroundColor: "#ffebee",
+              backgroundColor: "rgba(192, 96, 74, 0.12)",
               border: "1px solid #ef5350",
               borderRadius: "4px",
               color: "#c62828",

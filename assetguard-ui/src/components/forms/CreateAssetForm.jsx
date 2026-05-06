@@ -247,7 +247,7 @@ function CreateAssetForm({ onSubmit, onCancel }) {
                         padding: "4px 8px",
                         backgroundColor: "#fee2e2",
                         border: "1px solid #ef5350",
-                        color: "#dc2626",
+                        color: "#c0604a",
                         borderRadius: "4px",
                         cursor: "pointer",
                         fontSize: "12px",

@@ -318,10 +318,10 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
             <div style={{
               padding: "12px 16px",
               marginBottom: "20px",
-              backgroundColor: "#ffebee",
-              border: "1px solid #ef5350",
+              backgroundColor: "rgba(192, 96, 74, 0.12)",
+              border: "1px solid rgba(192, 96, 74, 0.3)",
               borderRadius: "4px",
-              color: "#c62828",
+              color: "#c0604a",
               fontSize: "14px"
             }}>
               ⚠️ {error}
@@ -487,7 +487,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                   <span 
                     className="badge-icon"
                     style={{
-                      color: evaluationResult.status === "Compliant" ? "#16a34a" : "#f87171"
+                      color: evaluationResult.status === "Compliant" ? "#7d9a7a" : "#f87171"
                     }}
                   >
                     {evaluationResult.status === "Compliant" ? "✓" : "✕"}
@@ -496,7 +496,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                 <h3 
                   className="compliance-status"
                   style={{
-                    color: evaluationResult.status === "Compliant" ? "#16a34a" : "#dc2626"
+                    color: evaluationResult.status === "Compliant" ? "#7d9a7a" : "#c0604a"
                   }}
                 >
                   {evaluationResult.status}
@@ -535,7 +535,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                   <span className="metric-label">EVALUATION DETAILS</span>
                   <span className="metric-icon">⚙️</span>
                 </div>
-                <div style={{ fontSize: "13px", lineHeight: "1.6", color: "#555" }}>
+                <div style={{ fontSize: "13px", lineHeight: "1.6", color: "#a09b8f" }}>
                   <div style={{ marginBottom: "8px" }}>
                     <strong>Equipment:</strong> {evaluationResult.equipment}
                   </div>

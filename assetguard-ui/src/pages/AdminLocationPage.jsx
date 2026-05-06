@@ -119,8 +119,8 @@ function AdminLocationPage({ user, onNavChange, onLogout }) {
               style={{
                 padding: "12px 16px",
                 marginBottom: "16px",
-                backgroundColor: "#fee2e2",
-                color: "#991b1b",
+                backgroundColor: "rgba(192, 96, 74, 0.12)",
+                color: "#c0604a",
                 borderRadius: "4px",
               }}
             >
@@ -134,7 +134,7 @@ function AdminLocationPage({ user, onNavChange, onLogout }) {
               style={{
                 padding: "24px",
                 textAlign: "center",
-                color: "#666",
+                color: "#a09b8f",
               }}
             >
               Loading locations...
@@ -175,7 +175,7 @@ function AdminLocationPage({ user, onNavChange, onLogout }) {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="3" style={{ textAlign: "center", padding: "24px", color: "#999" }}>
+                      <td colSpan="3" style={{ textAlign: "center", padding: "24px", color: "#6b6660" }}>
                         No locations found
                       </td>
                     </tr>
