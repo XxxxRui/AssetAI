@@ -20,6 +20,10 @@ function Sidebar({ activeItem = "Dashboard", onSelectItem, user = null }) {
 
   // Only show Admin menu if user has System_Admin role
   const isAdmin = user?.role === "System_Admin";
+  
+  // For Contractors, only show Evaluation page
+  const isContractor = user?.role === "Contractors";
+  const displayMenuItems = isContractor ? ["Evaluation"] : menuItems;
 
   const handleAdminClick = () => {
     setAdminExpanded(!adminExpanded);
@@ -41,7 +45,7 @@ function Sidebar({ activeItem = "Dashboard", onSelectItem, user = null }) {
       </div>
 
       <nav className="sidebar-nav">
-        {menuItems.map((item) => (
+        {displayMenuItems.map((item) => (
           <button
             key={item}
             className={`sidebar-link ${item === activeItem ? "active" : ""}`}

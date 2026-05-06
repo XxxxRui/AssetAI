@@ -35,8 +35,12 @@ const navDescriptions = {
 };
 
 function DashboardPage({ user, onLogout }) {
-  // Restore navigation state from localStorage, default to Dashboard
+  // Restore navigation state from localStorage, default to Dashboard or Evaluation for Contractors
   const [activeNav, setActiveNav] = useState(() => {
+    // For Contractors, default to Evaluation page
+    if (user?.role === "Contractors") {
+      return "Evaluation";
+    }
     try {
       return localStorage.getItem(NAV_STORAGE_KEY) || "Dashboard";
     } catch {
@@ -52,6 +56,14 @@ function DashboardPage({ user, onLogout }) {
       // Ignore storage failures
     }
   }, [activeNav]);
+
+  // For Contractors, only allow Evaluation page
+  const isContractor = user?.role === "Contractors";
+  if (isContractor && activeNav !== "Evaluation") {
+    // Redirect contractors to Evaluation page
+    setTimeout(() => setActiveNav("Evaluation"), 0);
+    return <EvaluationPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
+  }
 
   if (activeNav === "Evaluation") {
     return <EvaluationPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
