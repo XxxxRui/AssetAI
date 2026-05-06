@@ -309,27 +309,6 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
               The AI will verify compliance against current engineering standards.
             </p>
           </div>
-          {showResult && (
-            <button 
-              className="btn-new-evaluation" 
-              onClick={() => {
-                setShowResult(false);
-                setEvaluationResult(null);
-                setFormData({
-                  location: "",
-                  asset: "",
-                  equipment: "",
-                  equipmentModel: "",
-                  loadParameter: "",
-                  detailedDescription: "",
-                });
-                setAssetsByLocation({});
-              }}
-            >
-              <span className="btn-icon">+</span>
-              <span>New Evaluation</span>
-            </button>
-          )}
         </div>
 
         {/* Main Content */}
@@ -350,6 +329,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
           )}
 
           {/* Input Form Section */}
+          {!showResult && (
           <div className="input-form-section">
             <div className="form-grid-layout">
               {/* Row 1: Location & Asset */}
@@ -483,6 +463,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
               </button>
             </div>
           </div>
+          )}
 
           {/* Evaluation Result Section */}
           {showResult && evaluationResult && (
@@ -580,11 +561,18 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
 
             {/* Result Footer */}
             <div className="result-footer">
-              <div className="system-status">
-                <span className="status-indicator">●</span>
-                <span className="status-text">All Nodes Operational</span>
-              </div>
               <div className="result-actions">
+                {evaluationResult.status !== "Compliant" && (
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => {
+                      // TODO: Implement send email alert functionality
+                      alert("Sending email alert...");
+                    }}
+                  >
+                    🔔 Send Email Alert
+                  </button>
+                )}
                 <button 
                   className="btn btn-secondary"
                   onClick={() => {
