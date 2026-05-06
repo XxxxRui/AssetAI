@@ -29,5 +29,5 @@ class Config:
     SMTP_PORT = int(os.getenv("SMTP_PORT", os.getenv("MAIL_PORT", "2525")))
     SMTP_USERNAME = os.getenv("SMTP_USERNAME", os.getenv("MAIL_USERNAME", "2096e750101120"))
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", os.getenv("MAIL_PASSWORD", "2811e435f6d0b5"))
-    SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL")
+    SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "noreply@assetguard.local")
     SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true").lower() == "true"

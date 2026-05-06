@@ -157,6 +157,9 @@ class EvaluationService:
             except Exception:
                 failed += 1
 
+        if sent == 0 and failed > 0:
+            raise ApiError("Email delivery failed. Please check SMTP configuration.", 502, code="smtp_send_failed")
+
         return {
             "evaluationId": log.id,
             "status": status,

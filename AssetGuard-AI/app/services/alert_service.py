@@ -229,8 +229,12 @@ class AlertService:
         use_tls = bool(current_app.config.get("SMTP_USE_TLS", True))
         suppress_send = bool(current_app.config.get("SMTP_SUPPRESS_SEND", True))
 
-        if suppress_send or not host or not from_email:
-            return
+        if suppress_send:
+            raise RuntimeError("SMTP_SUPPRESS_SEND=true, email sending is disabled")
+        if not host:
+            raise RuntimeError("SMTP host is not configured")
+        if not from_email:
+            raise RuntimeError("SMTP from email is not configured")
 
         msg = EmailMessage()
         msg["From"] = from_email
