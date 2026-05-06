@@ -17,6 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$SCRIPT_DIR"
 BACKEND_DIR="$REPO_ROOT/AssetGuard-AI"
 FRONTEND_DIR="$REPO_ROOT/assetguard-ui"
+EXTRACTION_DIR="$REPO_ROOT/gjp-assetguard-extraction-tool"
 
 if [[ ! -d "$BACKEND_DIR" ]]; then
   echo "Backend folder not found: $BACKEND_DIR" >&2
@@ -114,13 +115,74 @@ npm run dev &
 FRONTEND_PID=$!
 echo "Frontend started (PID: $FRONTEND_PID)"
 
+EXTRACTION_PID=""
+if [[ -d "$EXTRACTION_DIR" ]]; then
+  (
+    set +e
+    set +u
+    cd "$EXTRACTION_DIR" || {
+      echo "[Warning] Extraction tool: could not cd to $EXTRACTION_DIR. Skipping." >&2
+      exit 0
+    }
+
+    echo "== AssetGuard Extraction Tool Bootstrap =="
+
+    if [[ ! -d ".venv" ]]; then
+      echo "[First-time] No extraction-tool virtual environment found. Creating .venv ..."
+      if ! python3 -m venv .venv; then
+        echo "[Warning] Extraction tool: venv creation failed. Skipping extraction server." >&2
+        exit 0
+      fi
+    fi
+
+    if [[ -f ".venv/bin/activate" ]]; then
+      source .venv/bin/activate
+      echo "Virtual environment activated: .venv"
+    else
+      echo "[Warning] Extraction tool: Failed to activate virtual environment. Skipping." >&2
+      exit 0
+    fi
+
+    EXTRACTION_PY="$(pwd)/.venv/bin/python"
+    echo "Python executable path: $EXTRACTION_PY"
+
+    if ! "$EXTRACTION_PY" -m pip install --upgrade pip; then
+      echo "[Warning] Extraction tool: pip upgrade failed. Skipping extraction server." >&2
+      exit 0
+    fi
+
+    echo "Ensuring extraction-tool dependencies from requirements.txt ..."
+    if ! "$EXTRACTION_PY" -m pip install -r requirements.txt; then
+      echo "[Warning] Extraction tool: pip install failed. Skipping extraction server." >&2
+      exit 0
+    fi
+
+    if [[ ! -f ".env" ]]; then
+      echo "[Warning] .env file not found in extraction tool folder. Some features may not work."
+    fi
+
+    echo "Starting extraction tool server on http://127.0.0.1:5001 ..."
+    exec "$EXTRACTION_PY" -m flask --app app.py run --port 5001
+  ) &
+  EXTRACTION_PID=$!
+  echo "Extraction tool started (PID: $EXTRACTION_PID)"
+else
+  echo "[Warning] Extraction tool folder not found; skipping extraction server: $EXTRACTION_DIR" >&2
+fi
+
 cleanup() {
   echo ""
-  echo "Stopping backend and frontend..."
+  echo "Stopping backend, frontend, and extraction tool..."
   kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
+  if [[ -n "${EXTRACTION_PID:-}" ]]; then
+    kill "$EXTRACTION_PID" 2>/dev/null || true
+  fi
   cd "$BACKEND_DIR"
   deactivate 2>/dev/null || true
 }
 
 trap cleanup INT TERM
 wait "$BACKEND_PID" "$FRONTEND_PID"
+if [[ -n "${EXTRACTION_PID:-}" ]]; then
+  wait "$EXTRACTION_PID" || true
+fi
