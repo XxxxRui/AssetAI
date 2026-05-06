@@ -18,6 +18,10 @@ function AssetsPage({ user, onNavChange, onLogout }) {
   const [totalAssets, setTotalAssets] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  
+  // Batch import state
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
 
   // Handle nav changes
   const handleNavChange = (newNav) => {
@@ -138,8 +142,106 @@ function AssetsPage({ user, onNavChange, onLogout }) {
   );
 
   const handleBatchImport = () => {
-    console.log("Batch Import clicked");
-    // TODO: Implement batch import functionality
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json';
+    fileInput.multiple = true;
+    fileInput.onchange = async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+      
+      setImporting(true);
+      setError("");
+      const results = { items: [], rejected: [], createdCount: 0, rejectedCount: 0 };
+      
+      try {
+        const token = getAuthToken();
+        if (!token) {
+          setError("No authentication token found. Please log in again.");
+          setImporting(false);
+          return;
+        }
+        
+        // Process each file
+        for (const file of files) {
+          try {
+            const fileContent = await file.text();
+            const assetData = JSON.parse(fileContent);
+            
+            // Call create asset API
+            const response = await fetch("http://127.0.0.1:5000/api/v1/assets/", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(assetData),
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              results.items.push({
+                file: file.name,
+                asset: result.data
+              });
+              results.createdCount++;
+            } else {
+              const errorData = await response.json();
+              results.rejected.push({
+                file: file.name,
+                reason: "Failed to create",
+                message: errorData.message || response.statusText
+              });
+              results.rejectedCount++;
+            }
+          } catch (parseErr) {
+            results.rejected.push({
+              file: file.name,
+              reason: "Invalid JSON",
+              message: parseErr.message
+            });
+            results.rejectedCount++;
+          }
+        }
+        
+        results.filesScanned = files.length;
+        setImportResult(results);
+        
+        // Refresh assets list
+        if (results.createdCount > 0 && selectedLocationId) {
+          try {
+            const refreshResponse = await fetch(
+              `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=100`,
+              {
+                method: "GET",
+                headers: {
+                  "Authorization": `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            
+            if (refreshResponse.ok) {
+              const refreshResult = await refreshResponse.json();
+              if (refreshResult.success && refreshResult.data) {
+                const assetsList = refreshResult.data.items || [];
+                const totalCount = refreshResult.data.total || assetsList.length;
+                setAssetsData(assetsList);
+                setTotalAssets(totalCount);
+              }
+            }
+          } catch (refreshErr) {
+            console.error("Error refreshing assets:", refreshErr);
+          }
+        }
+      } catch (err) {
+        console.error("Error importing assets:", err);
+        setError(err.message || "Failed to import assets");
+      } finally {
+        setImporting(false);
+      }
+    };
+    fileInput.click();
   };
 
   const handleCreateAsset = () => {
@@ -424,6 +526,71 @@ function AssetsPage({ user, onNavChange, onLogout }) {
           onCancel={handleCloseCreateAssetModal}
         />
       </Modal>
+
+      {/* Import Results Modal */}
+      {importResult && (
+        <Modal
+          title="Batch Import Results"
+          subtitle="Import summary and details"
+          onClose={() => setImportResult(null)}
+          size="medium"
+        >
+          <div style={{ padding: "16px 0" }}>
+            <div style={{
+              marginBottom: "20px",
+              padding: "12px 16px",
+              backgroundColor: "#f0f4f8",
+              borderRadius: "4px",
+              borderLeft: "4px solid #006767"
+            }}>
+              <h3 style={{ margin: "0 0 8px 0", color: "#006767" }}>Import Summary</h3>
+              <div style={{ fontSize: "13px", color: "#555" }}>
+                <p><strong>Files Scanned:</strong> {importResult.filesScanned}</p>
+                <p><strong>Created:</strong> <span style={{ color: "#16a34a" }}>{importResult.createdCount}</span></p>
+                <p><strong>Rejected:</strong> <span style={{ color: importResult.rejectedCount > 0 ? "#dc2626" : "#16a34a" }}>{importResult.rejectedCount}</span></p>
+              </div>
+            </div>
+
+            {importResult.items && importResult.items.length > 0 && (
+              <div style={{ marginBottom: "20px" }}>
+                <h4 style={{ marginBottom: "12px", color: "#333", fontSize: "13px" }}>Created Assets:</h4>
+                <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #ddd", borderRadius: "4px", padding: "12px" }}>
+                  {importResult.items.map((item, idx) => (
+                    <div key={idx} style={{ marginBottom: "12px", paddingBottom: "12px", borderBottom: idx < importResult.items.length - 1 ? "1px solid #eee" : "none", fontSize: "13px" }}>
+                      <p style={{ margin: "0 0 4px 0", fontWeight: "500" }}>{item.asset.name}</p>
+                      <p style={{ margin: "0", color: "#666", fontSize: "12px" }}>File: {item.file}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {importResult.rejected && importResult.rejected.length > 0 && (
+              <div>
+                <h4 style={{ marginBottom: "12px", color: "#dc2626", fontSize: "13px" }}>Rejected Files:</h4>
+                <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #fecaca", borderRadius: "4px", padding: "12px", backgroundColor: "#fff5f5" }}>
+                  {importResult.rejected.map((item, idx) => (
+                    <div key={idx} style={{ marginBottom: "12px", paddingBottom: "12px", borderBottom: idx < importResult.rejected.length - 1 ? "1px solid #fecaca" : "none", fontSize: "12px" }}>
+                      <p style={{ margin: "0 0 4px 0", fontWeight: "500", color: "#dc2626" }}>{item.file}</p>
+                      <p style={{ margin: "0", color: "#991b1b" }}>Reason: {item.reason}</p>
+                      <p style={{ margin: "0", color: "#7c2d12", fontSize: "11px" }}>{item.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px", paddingTop: "16px", borderTop: "1px solid #ddd" }}>
+            <button
+              className="btn-primary"
+              onClick={() => setImportResult(null)}
+              style={{ margin: 0 }}
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
+      )}
     </AppLayout>
   );
 }
