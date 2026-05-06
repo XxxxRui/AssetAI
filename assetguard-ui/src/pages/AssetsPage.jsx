@@ -22,6 +22,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
   // Batch import state
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Handle nav changes
   const handleNavChange = (newNav) => {
@@ -207,6 +208,12 @@ function AssetsPage({ user, onNavChange, onLogout }) {
         results.filesScanned = files.length;
         setImportResult(results);
         
+        // Show success message
+        if (results.createdCount > 0) {
+          setSuccessMessage(`✅ Successfully imported ${results.createdCount} asset(s)!`);
+          setTimeout(() => setSuccessMessage(""), 4000);
+        }
+        
         // Refresh assets list
         if (results.createdCount > 0 && selectedLocationId) {
           try {
@@ -342,9 +349,10 @@ function AssetsPage({ user, onNavChange, onLogout }) {
       return "No capacity data";
     }
 
-    // Show the first capacity as the primary max load
-    const firstCapacity = asset.loadCapacities[0];
-    return `${formatCapacityName(firstCapacity.name)}: ${firstCapacity.maxLoad} ${firstCapacity.metric}`;
+    // Show all capacities
+    return asset.loadCapacities
+      .map((cap) => `${formatCapacityName(cap.name)}: ${cap.maxLoad} ${cap.metric}`)
+      .join(" | ");
   };
 
   return (
@@ -416,6 +424,22 @@ function AssetsPage({ user, onNavChange, onLogout }) {
             </div>
           </div>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <div style={{
+            padding: "12px 16px",
+            marginBottom: "20px",
+            backgroundColor: "#dcfce7",
+            border: "1px solid #86efac",
+            borderRadius: "4px",
+            color: "#16a34a",
+            fontSize: "14px",
+            fontWeight: "500"
+          }}>
+            {successMessage}
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
