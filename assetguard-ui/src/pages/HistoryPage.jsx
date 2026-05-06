@@ -5,8 +5,6 @@ import { getAuthToken } from "../services/authSession";
 
 function HistoryPage({ user, onNavChange, onLogout }) {
   const [activeNav, setActiveNav] = useState("History");
-  const [locationFilter, setLocationFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   
   // Backend data state
@@ -24,6 +22,8 @@ function HistoryPage({ user, onNavChange, onLogout }) {
       setActiveNav(newNav);
     }
   };
+
+
 
   // Fetch evaluation history from backend
   useEffect(() => {
@@ -75,8 +75,6 @@ function HistoryPage({ user, onNavChange, onLogout }) {
     fetchEvaluationHistory();
   }, [currentPage]);
 
-  
-
   const handleNewEvaluation = () => {
     handleNavChange("Evaluation");
   };
@@ -85,9 +83,6 @@ function HistoryPage({ user, onNavChange, onLogout }) {
     console.log("Action for:", evaluationId);
     // TODO: Implement action menu
   };
-
-  const uniqueLocations = ["All Locations", "Port of Bunbury"];
-  const statuses = ["All Results", "Compliant", "Non-Compliant"];
 
   const getStatusStyle = (status) => {
     return status === "Compliant"
@@ -126,39 +121,6 @@ function HistoryPage({ user, onNavChange, onLogout }) {
             <span className="btn-icon">+</span>
             <span>New Evaluation</span>
           </button>
-        </div>
-
-        {/* Filters Section */}
-        <div className="filters-area">
-          <div className="filter-group">
-            <label className="filter-label">LOCATION</label>
-            <select
-              className="filter-select"
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-            >
-              {uniqueLocations.map((location) => (
-                <option key={location} value={location.toLowerCase()}>
-                  {location}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label className="filter-label">RESULT STATUS</label>
-            <select
-              className="filter-select"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              {statuses.map((status) => (
-                <option key={status} value={status.toLowerCase()}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
 
         {/* Evaluation History Table */}
