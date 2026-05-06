@@ -78,6 +78,7 @@ class AlertService:
                     "maxPlanned": item.get("maxPlanned", "-"),
                     "overCap": item.get("overCap", "-"),
                     "sentAt": item.get("sentAt"),
+                    "errorMessage": item.get("errorMessage"),
                 }
             )
 
@@ -114,6 +115,17 @@ class AlertService:
             )
         return normalized[:limit]
 
+
+    @staticmethod
+    def render_template(*, status: str, asset_name: str, overload_percent: float) -> tuple[str, str]:
+        subject = _STORE.template["subject"].format(status=status, assetName=asset_name)
+        body = _STORE.template["body"].format(
+            status=status,
+            assetName=asset_name,
+            overloadPercent=round(overload_percent, 2),
+        )
+        return subject, body
+
     @staticmethod
     def send_test_email() -> dict[str, Any]:
         recipients = [
@@ -125,8 +137,7 @@ class AlertService:
         recipient = recipients[0]
         asset_name = "Template Test Asset"
         status = "Delivered"
-        subject = _STORE.template["subject"].format(status="Test", assetName=asset_name)
-        body = _STORE.template["body"].format(status="Test", assetName=asset_name, overloadPercent=0)
+        subject, body = AlertService.render_template(status="Test", asset_name=asset_name, overload_percent=0)
 
         delivery_status = "Delivered"
         error = None
@@ -160,11 +171,10 @@ class AlertService:
             return
 
         for recipient in recipients:
-            subject = _STORE.template["subject"].format(status=status, assetName=asset_name)
-            body = _STORE.template["body"].format(
+            subject, body = AlertService.render_template(
                 status=status,
-                assetName=asset_name,
-                overloadPercent=round(overload_percent * 100, 2),
+                asset_name=asset_name,
+                overload_percent=overload_percent * 100,
             )
 
             delivery_status = "Delivered"
@@ -229,8 +239,12 @@ class AlertService:
         use_tls = bool(current_app.config.get("SMTP_USE_TLS", True))
         suppress_send = bool(current_app.config.get("SMTP_SUPPRESS_SEND", True))
 
-        if suppress_send or not host or not from_email:
-            return
+        if suppress_send:
+            raise RuntimeError("SMTP_SUPPRESS_SEND=true, email sending is disabled")
+        if not host:
+            raise RuntimeError("SMTP host is not configured")
+        if not from_email:
+            raise RuntimeError("SMTP from email is not configured")
 
         msg = EmailMessage()
         msg["From"] = from_email

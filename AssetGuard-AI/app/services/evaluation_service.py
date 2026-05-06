@@ -3,7 +3,8 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 
 from app.extensions import db
-from app.models import Asset, EvaluationLog, LoadCapacity
+from app.models import Asset, EvaluationLog, LoadCapacity, User
+from app.models.user import UserRole
 from app.models.evaluation_log import EvaluationStatus
 from app.services.alert_service import AlertService
 from app.utils.equipment_mapping import normalize_capacity_name, resolve_equipment
@@ -100,6 +101,7 @@ class EvaluationService:
         )
 
         return {
+            "evaluationId": log.id,
             "asset": {
                 "id": asset.id,
                 "name": asset.name,
@@ -114,6 +116,68 @@ class EvaluationService:
             "status": status.value,
             "overloadPercentage": float(overload_pct),
             "remark": remark_clean,
+        }
+
+
+
+    @staticmethod
+    def send_evaluation_email(*, evaluation_id: int, requester_email: str) -> dict:
+        log = EvaluationLog.query.filter_by(id=evaluation_id).first()
+        if log is None:
+            raise ApiError("Evaluation record not found", 404, code="evaluation_not_found")
+
+        recipients: list[str] = []
+        manager_rows = User.query.filter_by(role=UserRole.ASSET_MANAGER).all()
+        recipients.extend([u.email for u in manager_rows if u.email])
+        if requester_email:
+            recipients.append(requester_email)
+
+        deduped_recipients = list(dict.fromkeys([r.strip() for r in recipients if r and r.strip()]))
+        if not deduped_recipients:
+            raise ApiError("No recipients available for this notification", 400, code="recipients_missing")
+
+        asset_name = log.asset.name if log.asset else f"Asset #{log.asset_id}"
+        status = log.status.value
+        overload_pct = round(log.overload_percentage * 100, 2)
+        subject, body = AlertService.render_template(
+            status=status,
+            asset_name=asset_name,
+            overload_percent=overload_pct,
+        )
+        body = body + (
+            f"\nEquipment: {log.equipment}\n"
+            f"Load: {log.load_parameter_value}{log.load_parameter_metric}\n"
+        )
+
+        sent = 0
+        failed = 0
+        sent_recipients: list[str] = []
+        failed_recipients: list[dict[str, str]] = []
+        for recipient in deduped_recipients:
+            try:
+                AlertService._send_email_smtp(recipient=recipient, subject=subject, body=body)
+                sent += 1
+                sent_recipients.append(recipient)
+            except Exception as exc:
+                failed += 1
+                failed_recipients.append({"email": recipient, "error": str(exc)})
+
+        if sent == 0 and failed > 0:
+            raise ApiError(
+                "Email delivery failed. Please check SMTP configuration.",
+                502,
+                code="smtp_send_failed",
+                details={"failedRecipients": failed_recipients},
+            )
+
+        return {
+            "evaluationId": log.id,
+            "status": status,
+            "recipients": deduped_recipients,
+            "sentRecipients": sent_recipients,
+            "failedRecipients": failed_recipients,
+            "sent": sent,
+            "failed": failed,
         }
 
     @staticmethod
