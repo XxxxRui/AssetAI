@@ -139,13 +139,14 @@ class EvaluationService:
         asset_name = log.asset.name if log.asset else f"Asset #{log.asset_id}"
         status = log.status.value
         overload_pct = round(log.overload_percentage * 100, 2)
-        subject = f"[AssetGuard] Evaluation Result - {asset_name}"
-        body = (
-            f"Evaluation result: {status}\n"
-            f"Asset: {asset_name}\n"
-            f"Equipment: {log.equipment}\n"
+        subject, body = AlertService.render_template(
+            status=status,
+            asset_name=asset_name,
+            overload_percent=overload_pct,
+        )
+        body = body + (
+            f"\nEquipment: {log.equipment}\n"
             f"Load: {log.load_parameter_value}{log.load_parameter_metric}\n"
-            f"Overload: {overload_pct}%\n"
         )
 
         sent = 0
