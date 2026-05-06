@@ -65,12 +65,34 @@ function DashboardPage({ user, onLogout }) {
     return <HistoryPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
   }
 
-  if (activeNav === "Admin/User") {
-    return <AdminUsersPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
-  }
+  // Admin pages - Check user role and protect access
+  if (activeNav === "Admin/User" || activeNav === "Admin/Location") {
+    // If user is not System_Admin, redirect to Dashboard
+    if (user?.role !== "System_Admin") {
+      // Reset activeNav to Dashboard to prevent access
+      setTimeout(() => setActiveNav("Dashboard"), 0);
+      return (
+        <AppLayout activeNav="Dashboard" onNavChange={setActiveNav} user={user} onLogout={onLogout}>
+          <section className="module-placeholder">
+            <h1>Access Denied</h1>
+            <p>You do not have permission to access the Admin section. Only System Administrators can access this area.</p>
+            <button className="btn-primary" onClick={() => setActiveNav("Dashboard")}
+              style={{ marginTop: "16px", padding: "12px 24px", border: "none", borderRadius: "4px", cursor: "pointer" }}
+            >
+              Return to Dashboard
+            </button>
+          </section>
+        </AppLayout>
+      );
+    }
 
-  if (activeNav === "Admin/Location") {
-    return <AdminLocationPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
+    if (activeNav === "Admin/User") {
+      return <AdminUsersPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
+    }
+
+    if (activeNav === "Admin/Location") {
+      return <AdminLocationPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
+    }
   }
 
   if (activeNav === "Alerts") {

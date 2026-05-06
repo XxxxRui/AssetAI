@@ -8,6 +8,7 @@ function AppLayout({ children, activeNav, onNavChange, user, menuItems, onLogout
         activeItem={activeNav}
         onSelectItem={onNavChange}
         menuItems={menuItems}
+        user={user}
       />
       <div className="app-main">
         <Topbar user={user} onLogout={onLogout} />
