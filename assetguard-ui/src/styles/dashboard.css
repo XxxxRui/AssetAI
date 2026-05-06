@@ -218,7 +218,6 @@
 
 .topbar-dropdown-item:hover {
   background: var(--color-bg-hover);
-  color: var(--color-danger);
 }
 
 /* --- Content --- */
