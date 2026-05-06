@@ -17,6 +17,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [currentPage, setCurrentPage] = useState("login");
   const [systemMessage, setSystemMessage] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const handleLogout = (message = "") => {
     try {
@@ -60,6 +61,8 @@ function App() {
       
       setCurrentPage("dashboard");
     }
+    // Mark as initialized even if no token was restored
+    setIsInitialized(true);
   }, []);
 
   useEffect(() => {
@@ -125,21 +128,28 @@ function App() {
 
   return (
     <>
-      {currentPage === "login" && (
-        <LoginEmailPage
-          onLoginSuccess={handleLoginSuccess}
-          systemMessage={systemMessage}
-        />
-      )}
-      {currentPage === "password" && (
-        <PasswordSetupPage
-          token={token}
-          onPasswordSetSuccess={handlePasswordSetSuccess}
-          onBackToLogin={handleLogout}
-        />
-      )}
-      {currentPage === "dashboard" && (
-        <DashboardPage user={user} onLogout={() => handleLogout("")} />
+      {!isInitialized ? (
+        // Don't render anything until initialization is complete to avoid flash
+        <div />
+      ) : (
+        <>
+          {currentPage === "login" && (
+            <LoginEmailPage
+              onLoginSuccess={handleLoginSuccess}
+              systemMessage={systemMessage}
+            />
+          )}
+          {currentPage === "password" && (
+            <PasswordSetupPage
+              token={token}
+              onPasswordSetSuccess={handlePasswordSetSuccess}
+              onBackToLogin={handleLogout}
+            />
+          )}
+          {currentPage === "dashboard" && (
+            <DashboardPage user={user} onLogout={() => handleLogout("")} />
+          )}
+        </>
       )}
     </>
   );
