@@ -335,6 +335,125 @@ Change the password of the currently authenticated user.
 | `401` | `missing_token` | No Bearer token provided |
 | `401` | `invalid_credentials` | `currentPassword` does not match the user's actual password |
 
+
+### GET `/api/v1/auth/users`
+
+List all users with pagination.
+
+**Permissions:** `System_Admin` only.
+
+**Query parameters:**
+
+| Parameter | Type | Required | Default | Notes |
+|-----------|------|----------|---------|-------|
+| `page` | integer | No | `1` | Must be ≥ 1 |
+| `pageSize` | integer | No | `20` | Must be 1–200 |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": 1,
+        "email": "admin@demo.com",
+        "role": "System_Admin",
+        "isFirstLogin": false
+      }
+    ],
+    "page": 1,
+    "pageSize": 20,
+    "total": 1,
+    "pages": 1
+  }
+}
+```
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `400` | `validation_error` | Pagination parameters out of range |
+| `403` | — | Caller is not `System_Admin` |
+
+---
+
+### PUT `/api/v1/auth/users/<user_id>`
+
+Update a user's email, role, or password.
+
+**Permissions:** `System_Admin` only.
+
+**Request body (partial update):**
+
+```json
+{
+  "email": "newemail@demo.com",
+  "role": "Asset_Manager",
+  "password": "newPassword123"
+}
+```
+
+At least one of `email`, `role`, or `password` must be present. When `password` is provided the user's `isFirstLogin` flag is reset to `true`.
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `email` | string | No | Must be unique |
+| `role` | string | No | One of `System_Admin`, `Asset_Manager`, `Contractors` |
+| `password` | string | No | When set, resets `isFirstLogin` to `true` |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 5,
+    "email": "newemail@demo.com",
+    "role": "Asset_Manager",
+    "isFirstLogin": false
+  }
+}
+```
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `400` | `validation_error` | No updatable field provided, or role value is invalid |
+| `403` | — | Caller is not `System_Admin` |
+| `404` | `user_not_found` | No user with the given ID |
+| `409` | `email_exists` | Email address already registered |
+
+---
+
+### DELETE `/api/v1/auth/users/<user_id>`
+
+Delete a user account. The caller cannot delete their own account.
+
+**Permissions:** `System_Admin` only.
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "deleted": true
+  }
+}
+```
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `400` | `cannot_delete_self` | Attempted to delete the authenticated user's own account |
+| `403` | — | Caller is not `System_Admin` |
+| `404` | `user_not_found` | No user with the given ID |
+
 ---
 
 ## Location APIs
@@ -392,6 +511,81 @@ Create a new location.
 | `400` | `validation_error` | `name` is missing or blank |
 | `403` | — | Caller lacks permission |
 | `409` | `location_exists` | Location name already exists |
+
+**Response fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | number | Location ID |
+| `name` | string | Location name |
+| `createdAt` | string (ISO 8601) | Creation timestamp (UTC) |
+| `updatedAt` | string (ISO 8601) | Last update timestamp (UTC) |
+
+---
+
+### PUT `/api/v1/locations/<location_id>`
+
+Rename an existing location.
+
+**Permissions:** `System_Admin`, `Asset_Manager`.
+
+**Request body:**
+
+```json
+{
+  "name": "South Wharf"
+}
+```
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 3,
+    "name": "South Wharf",
+    "createdAt": "2026-05-06T10:30:00+00:00",
+    "updatedAt": "2026-05-06T12:15:00+00:00"
+  }
+}
+```
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `400` | `validation_error` | `name` is missing or blank |
+| `403` | — | Caller lacks permission |
+| `404` | `location_not_found` | Location does not exist |
+| `409` | `location_exists` | Another location already has this name |
+
+---
+
+### DELETE `/api/v1/locations/<location_id>`
+
+Delete a location. Fails if assets still reference it.
+
+**Permissions:** `System_Admin` only.
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "deleted": true
+  }
+}
+```
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `403` | — | Caller lacks permission |
+| `404` | `location_not_found` | Location does not exist |
+| `409` | `location_has_assets` | Cannot delete — assets still reference this location |
 
 ---
 
@@ -686,6 +880,87 @@ If `directoryPath` is omitted, the server uses the value of `AI_JSON_UPLOADS_DIR
 | `400` | `validation_error` | `directoryPath` is required but not provided and no default is configured |
 | `403` | — | Caller is not `System_Admin` |
 | `404` | `json_uploads_dir_not_found` | The specified directory does not exist |
+
+---
+
+### PUT `/api/v1/assets/<asset_id>`
+
+Update an asset's name and/or location.
+
+**Permissions:** `System_Admin`, `Asset_Manager`.
+
+**Request body (partial update):**
+
+```json
+{
+  "name": "Renamed Asset",
+  "locationName": "North Wharf"
+}
+```
+
+At least one of `name` or `locationName` must be present. When `locationName` is provided, the same fuzzy-matching and auto-creation logic used by `POST /assets/` applies.
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `name` | string | No | Must not be empty; must be unique within the resolved location |
+| `locationName` | string | No | See location-resolution behaviour |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 11,
+    "name": "Renamed Asset",
+    "locationId": 3,
+    "loadCapacities": [
+      {
+        "id": 31,
+        "name": "max point load",
+        "metric": "kN",
+        "maxLoad": 1200.0,
+        "details": null
+      }
+    ]
+  }
+}
+```
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `400` | `validation_error` | No updatable field provided or name is blank |
+| `403` | — | Caller lacks permission |
+| `404` | `asset_not_found` | No asset with the given ID |
+| `409` | `asset_already_exists` | Asset with the same name already exists at the resolved location |
+
+---
+
+### DELETE `/api/v1/assets/<asset_id>`
+
+Delete an asset and all its associated load capacities.
+
+**Permissions:** `System_Admin`, `Asset_Manager`.
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "deleted": true
+  }
+}
+```
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `403` | — | Caller lacks permission |
+| `404` | `asset_not_found` | No asset with the given ID |
 
 ---
 
@@ -1026,6 +1301,18 @@ List all past evaluation log entries, most recent first.
 |-----------|------|----------|---------|-------|
 | `page` | integer | No | `1` | Must be ≥ 1 |
 | `pageSize` | integer | No | `20` | Must be 1–200 |
+| `assetId` | integer | No | — | Filter by asset ID |
+| `equipment` | string | No | — | Filter by exact equipment type name |
+| `status` | string | No | — | Filter by `"Compliant"` or `"Non-Compliant"` |
+| `fromDate` | string | No | — | Filter records on or after this date (format: `YYYY-MM-DD`) |
+| `toDate` | string | No | — | Filter records before this date (format: `YYYY-MM-DD`) |
+
+**Example request with filters:**
+
+```http
+GET /api/v1/evaluations/history?page=1&pageSize=20&assetId=10&status=Non-Compliant&fromDate=2026-01-01&toDate=2026-12-31
+Authorization: Bearer <token>
+```
 
 **Response `200`:**
 
@@ -1061,7 +1348,7 @@ List all past evaluation log entries, most recent first.
 
 | Status | Code | Description |
 |--------|------|-------------|
-| `400` | `validation_error` | Pagination parameters out of range |
+| `400` | `validation_error` | Pagination parameters out of range, invalid date format, or invalid status value |
 | `403` | — | Caller is `Contractors` (insufficient permission) |
 
 ---

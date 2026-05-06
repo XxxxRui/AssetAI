@@ -49,14 +49,17 @@ function PasswordSetupPage({ token, onPasswordSetSuccess, onBackToLogin }) {
 
   const leftContent = (
     <div className="setup-left-content">
-      <div className="brand">AssetGuard AI</div>
+      <div className="hero-brand">
+        <span className="hero-brand-icon">&#9670;</span>
+        AssetGuard AI
+      </div>
 
       <div className="setup-copy">
-        <p className="eyebrow dark">SECURITY PROTOCOL 01</p>
+        <p className="hero-subtitle">SECURITY PROTOCOL</p>
 
         <h1>Initialize your secure gateway.</h1>
 
-        <p className="setup-description">
+        <p className="hero-description" style={{ color: "rgba(255,255,255,0.5)", maxWidth: 520 }}>
           First-time authentication requires a robust password to anchor your
           account&apos;s cryptographic identity within the AssetGuard network.
         </p>
@@ -100,7 +103,7 @@ function PasswordSetupPage({ token, onPasswordSetSuccess, onBackToLogin }) {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
-            <span className="eye">◉</span>
+            <span className="eye">&#9673;</span>
           </div>
         </div>
 
@@ -128,9 +131,14 @@ function PasswordSetupPage({ token, onPasswordSetSuccess, onBackToLogin }) {
         </div>
 
         {errorMessage && (
-          <p style={{ color: "#f87171", marginTop: "0", marginBottom: "8px" }}>
-            {errorMessage}
-          </p>
+          <div className="auth-error" role="alert">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            <span>{errorMessage}</span>
+          </div>
         )}
 
         <button
@@ -139,15 +147,25 @@ function PasswordSetupPage({ token, onPasswordSetSuccess, onBackToLogin }) {
           onClick={handleSetPassword}
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Saving..." : "Initialize Secure Access"} <span>→</span>
+          {isSubmitting ? "Saving..." : "Initialize Secure Access"}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 8 }}>
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+          </svg>
         </button>
-        <button type="button" className="primary-btn" onClick={onBackToLogin}>
+
+        <button
+          type="button"
+          className="secondary-btn"
+          onClick={onBackToLogin}
+          style={{ marginTop: 12 }}
+        >
           Back to Login
         </button>
       </div>
 
       <div className="tip-card">
-        <div className="tip-title">✧ AI SECURITY TIP</div>
+        <div className="tip-title">AI Security Tip</div>
         <p>
           Our GuardNet engine suggests using a unique passphrase of four
           unrelated words for optimal cryptographic strength.
@@ -158,7 +176,7 @@ function PasswordSetupPage({ token, onPasswordSetSuccess, onBackToLogin }) {
 
   const footer = (
     <>
-      <div>© 2024 ASSETGUARD AI</div>
+      <div>&copy; 2024 AssetGuard AI</div>
       <div className="footer-links">
         <span>PRIVACY PROTOCOL</span>
         <span>SUPPORT</span>

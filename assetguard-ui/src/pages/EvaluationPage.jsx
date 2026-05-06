@@ -318,10 +318,10 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
             <div style={{
               padding: "12px 16px",
               marginBottom: "20px",
-              backgroundColor: "#ffebee",
-              border: "1px solid #ef5350",
+              backgroundColor: "#fef2f2",
+              border: "1px solid #fecaca",
               borderRadius: "4px",
-              color: "#c62828",
+              color: "#dc2626",
               fontSize: "14px"
             }}>
               ⚠️ {error}
@@ -459,7 +459,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                 onClick={handleEvaluate}
                 disabled={evaluating}
               >
-                {evaluating ? "⏳ Evaluating..." : "⚡ Evaluate Asset"}
+                {evaluating ? "Evaluating..." : "Evaluate Asset"}
               </button>
             </div>
           </div>
@@ -487,7 +487,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                   <span 
                     className="badge-icon"
                     style={{
-                      color: evaluationResult.status === "Compliant" ? "#16a34a" : "#f87171"
+                      color: evaluationResult.status === "Compliant" ? "#006d73" : "#f87171"
                     }}
                   >
                     {evaluationResult.status === "Compliant" ? "✓" : "✕"}
@@ -496,7 +496,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                 <h3 
                   className="compliance-status"
                   style={{
-                    color: evaluationResult.status === "Compliant" ? "#16a34a" : "#dc2626"
+                    color: evaluationResult.status === "Compliant" ? "#006d73" : "#dc2626"
                   }}
                 >
                   {evaluationResult.status}
@@ -535,7 +535,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                   <span className="metric-label">EVALUATION DETAILS</span>
                   <span className="metric-icon">⚙️</span>
                 </div>
-                <div style={{ fontSize: "13px", lineHeight: "1.6", color: "#555" }}>
+                <div style={{ fontSize: "13px", lineHeight: "1.6", color: "#64748b" }}>
                   <div style={{ marginBottom: "8px" }}>
                     <strong>Equipment:</strong> {evaluationResult.equipment}
                   </div>

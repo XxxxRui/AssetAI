@@ -1,6 +1,11 @@
+from datetime import datetime, timezone
 from enum import Enum
 
 from app.extensions import db
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class CapacityName(str, Enum):
@@ -50,3 +55,5 @@ class LoadCapacity(db.Model):
     )
     max_load = db.Column(db.Float, nullable=False)
     details = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=_utc_now)
+    updated_at = db.Column(db.DateTime, nullable=False, default=_utc_now, onupdate=_utc_now)

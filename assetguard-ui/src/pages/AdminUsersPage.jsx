@@ -15,7 +15,7 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
   const [error, setError] = useState(null);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
 
-  const PAGE_SIZE = 5;
+  const PAGE_SIZE = 10;
 
   // Fetch users from backend
   useEffect(() => {
@@ -33,7 +33,7 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
             name: user.email,
             role: user.role,
             status: user.isFirstLogin ? "NEW" : "ACTIVE",
-            statusColor: user.isFirstLogin ? "#008282" : "#006767",
+            statusColor: user.isFirstLogin ? "#008282" : "#006d73",
           }));
 
           setUsersData(mappedUsers);
@@ -125,8 +125,8 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
               style={{
                 padding: "12px 16px",
                 marginBottom: "16px",
-                backgroundColor: "#fee2e2",
-                color: "#991b1b",
+                backgroundColor: "#fef2f2",
+                color: "#dc2626",
                 borderRadius: "4px",
               }}
             >
@@ -140,7 +140,7 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
               style={{
                 padding: "24px",
                 textAlign: "center",
-                color: "#666",
+                color: "#64748b",
               }}
             >
               Loading users...
@@ -200,57 +200,42 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" style={{ textAlign: "center", padding: "24px", color: "#999" }}>
+                      <td colSpan="5" style={{ textAlign: "center", padding: "24px", color: "#94a3b8" }}>
                         No users found
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
-            </div>
-          )}
 
-          {/* Pagination */}
-          {!loading && !error && (
-            <div className="pagination-section">
-              <div className="pagination-info">
-                <span>
-                  Showing {usersData.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0}-
-                  {Math.min(currentPage * PAGE_SIZE, totalUsers)} of {totalUsers} users
-                </span>
-              </div>
-              <div className="pagination-controls">
-                <button
-                  className="pagination-btn prev-btn"
-                  onClick={handlePrevPage}
-                  disabled={currentPage === 1}
-                >
-                  ←
-                </button>
-                {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => (
-                  <button
-                    key={i + 1}
-                    className={`pagination-btn ${currentPage === i + 1 ? "active" : ""}`}
-                    onClick={() => setCurrentPage(i + 1)}
-                    style={{ display: i + 1 <= totalPages ? "block" : "none" }}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-                {totalPages > 3 && <span className="pagination-ellipsis">...</span>}
-                {totalPages > 3 && (
-                  <button className="pagination-btn" onClick={() => setCurrentPage(totalPages)}>
-                    {totalPages}
-                  </button>
-                )}
-                <button
-                  className="pagination-btn next-btn"
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                >
-                  →
-                </button>
-              </div>
+              {/* Pagination */}
+              {!loading && !error && (
+                <div className="pagination-container">
+                  <div className="pagination-info">
+                    <span>
+                      Showing {usersData.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0}-
+                      {Math.min(currentPage * PAGE_SIZE, totalUsers)} of {totalUsers} users
+                    </span>
+                  </div>
+                  <div className="pagination-controls">
+                    <button
+                      className="pagination-button"
+                      onClick={handlePrevPage}
+                      disabled={currentPage === 1}
+                    >
+                      ←
+                    </button>
+                    <span className="pagination-number">{currentPage}</span>
+                    <button
+                      className="pagination-button"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from flask import Blueprint, request
 
 from app.models.user import UserRole
@@ -5,6 +7,12 @@ from app.services.auth_service import AuthService
 from app.utils.auth import get_auth_context, require_roles
 from app.utils.errors import ApiError
 from app.utils.responses import ok
+
+def _iso(dt: datetime) -> str:
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone().replace(microsecond=0).isoformat()
+
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -108,6 +116,8 @@ def create_user():
             "email": user.email,
             "role": user.role.value,
             "isFirstLogin": user.is_first_login,
+            "createdAt": _iso(user.created_at),
+            "updatedAt": _iso(user.updated_at),
         },
         status_code=201,
     )
@@ -126,7 +136,7 @@ def list_users():
     page_size = request.args.get("pageSize", 20, type=int)
 
     users, total = AuthService.list_users(page=page, page_size=page_size)
-    
+
     pages = (total + page_size - 1) // page_size if page_size > 0 else 1
 
     return ok(
@@ -137,6 +147,8 @@ def list_users():
                     "email": user.email,
                     "role": user.role.value,
                     "isFirstLogin": user.is_first_login,
+                    "createdAt": _iso(user.created_at),
+                    "updatedAt": _iso(user.updated_at),
                 }
                 for user in users
             ],
@@ -146,3 +158,52 @@ def list_users():
             "pages": pages,
         }
     )
+
+
+@auth_bp.put("/users/<int:user_id>")
+@require_roles(UserRole.SYSTEM_ADMIN.value)
+def update_user(user_id: int):
+    """
+    Update a user's email, role, or password (System_Admin only).
+
+    JSON body: email?, role?, password?
+    """
+    _ = get_auth_context()
+    body = request.get_json(silent=True) or {}
+    email = body.get("email")
+    role_str = body.get("role")
+    password = body.get("password")
+
+    if email is None and role_str is None and password is None:
+        raise ApiError(
+            "At least one of email, role, or password must be provided",
+            400,
+            code="validation_error",
+        )
+
+    user = AuthService.update_user(
+        user_id=user_id,
+        email=email,
+        role=role_str,
+        password=password,
+    )
+
+    return ok({
+        "id": user.id,
+        "email": user.email,
+        "role": user.role.value,
+        "isFirstLogin": user.is_first_login,
+        "createdAt": _iso(user.created_at),
+        "updatedAt": _iso(user.updated_at),
+    })
+
+
+@auth_bp.delete("/users/<int:user_id>")
+@require_roles(UserRole.SYSTEM_ADMIN.value)
+def delete_user(user_id: int):
+    """
+    Delete a user (System_Admin only). Cannot delete own account.
+    """
+    ctx = get_auth_context()
+    AuthService.delete_user(user_id=user_id, current_user_id=ctx.user_id)
+    return ok({"deleted": True})

@@ -10,16 +10,19 @@ import {
 } from "./services/authSession";
 
 const LAST_LOGIN_EMAIL_KEY = "assetguard:last-login-email";
+const USER_DATA_KEY = "assetguard:user-data";
 
 function App() {
   const [token, setToken] = useState("");
   const [user, setUser] = useState(null);
   const [currentPage, setCurrentPage] = useState("login");
   const [systemMessage, setSystemMessage] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const handleLogout = (message = "") => {
     try {
       localStorage.removeItem(LAST_LOGIN_EMAIL_KEY);
+      localStorage.removeItem(USER_DATA_KEY);
     } catch {
       // Ignore storage failures (e.g. private mode restrictions).
     }
@@ -32,16 +35,34 @@ function App() {
   };
 
   useEffect(() => {
-    // On app startup, try to restore token from localStorage
+    // On app startup, try to restore token and user data from localStorage
     const restoredToken = restoreAuthToken();
     if (restoredToken) {
       setToken(restoredToken);
       setAuthToken(restoredToken);
-      // Note: We don't have user data, but the token is valid.
-      // The app will fetch user data when needed or show a default state.
-      // For now, proceed to dashboard - user data can be loaded separately if needed
+      
+      // Try to restore user data from localStorage
+      try {
+        const storedUserData = localStorage.getItem(USER_DATA_KEY);
+        if (storedUserData) {
+          const userData = JSON.parse(storedUserData);
+          // Only restore safe fields
+          const safeUser = {
+            email: userData?.email || "",
+            role: userData?.role || "",
+            isFirstLogin: userData?.isFirstLogin || false,
+          };
+          setUser(safeUser);
+        }
+      } catch (e) {
+        // Ignore parsing errors, proceed without user data
+        console.error("Failed to restore user data:", e);
+      }
+      
       setCurrentPage("dashboard");
     }
+    // Mark as initialized even if no token was restored
+    setIsInitialized(true);
   }, []);
 
   useEffect(() => {
@@ -67,6 +88,20 @@ function App() {
     setToken(nextToken);
     setAuthToken(nextToken);
     setUser(nextUser);
+    
+    // Save only essential user data to localStorage
+    try {
+      const safeUserData = {
+        email: nextUser?.email || "",
+        role: nextUser?.role || "",
+        isFirstLogin: nextUser?.isFirstLogin || false,
+      };
+      localStorage.setItem(USER_DATA_KEY, JSON.stringify(safeUserData));
+    } catch (e) {
+      // Ignore storage failures
+      console.error("Failed to save user data:", e);
+    }
+    
     setSystemMessage("");
     setCurrentPage(nextUser?.isFirstLogin ? "password" : "dashboard");
   };
@@ -74,26 +109,47 @@ function App() {
   const handlePasswordSetSuccess = () => {
     const nextUser = { ...(user || {}), isFirstLogin: false };
     setUser(nextUser);
+    
+    // Update user data in localStorage
+    try {
+      const safeUserData = {
+        email: nextUser?.email || "",
+        role: nextUser?.role || "",
+        isFirstLogin: nextUser?.isFirstLogin || false,
+      };
+      localStorage.setItem(USER_DATA_KEY, JSON.stringify(safeUserData));
+    } catch (e) {
+      // Ignore storage failures
+      console.error("Failed to update user data:", e);
+    }
+    
     setCurrentPage("dashboard");
   };
 
   return (
     <>
-      {currentPage === "login" && (
-        <LoginEmailPage
-          onLoginSuccess={handleLoginSuccess}
-          systemMessage={systemMessage}
-        />
-      )}
-      {currentPage === "password" && (
-        <PasswordSetupPage
-          token={token}
-          onPasswordSetSuccess={handlePasswordSetSuccess}
-          onBackToLogin={handleLogout}
-        />
-      )}
-      {currentPage === "dashboard" && (
-        <DashboardPage user={user} onLogout={() => handleLogout("")} />
+      {!isInitialized ? (
+        // Don't render anything until initialization is complete to avoid flash
+        <div />
+      ) : (
+        <>
+          {currentPage === "login" && (
+            <LoginEmailPage
+              onLoginSuccess={handleLoginSuccess}
+              systemMessage={systemMessage}
+            />
+          )}
+          {currentPage === "password" && (
+            <PasswordSetupPage
+              token={token}
+              onPasswordSetSuccess={handlePasswordSetSuccess}
+              onBackToLogin={handleLogout}
+            />
+          )}
+          {currentPage === "dashboard" && (
+            <DashboardPage user={user} onLogout={() => handleLogout("")} />
+          )}
+        </>
       )}
     </>
   );

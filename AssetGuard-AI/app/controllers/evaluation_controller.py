@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 from flask import Blueprint, request
 
 from app.models.user import UserRole
@@ -73,6 +75,19 @@ def check():
     return ok(data)
 
 
+def _parse_optional_date(value: str | None) -> date | None:
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        raise ApiError(
+            f"Invalid date format: {value!r}; expected YYYYY-MM-DD",
+            400,
+            code="validation_error",
+        )
+
+
 @evaluations_bp.get("/history")
 @require_roles(UserRole.SYSTEM_ADMIN.value, UserRole.ASSET_MANAGER.value)
 def history():
@@ -82,7 +97,21 @@ def history():
     if page < 1 or page_size < 1 or page_size > 200:
         raise ApiError("Invalid pagination parameters", 400, code="validation_error")
 
-    data = EvaluationService.history(page=page, page_size=page_size)
+    asset_id = request.args.get("assetId", type=int)
+    equipment = request.args.get("equipment")
+    status = request.args.get("status")
+    from_date = _parse_optional_date(request.args.get("fromDate"))
+    to_date = _parse_optional_date(request.args.get("toDate"))
+
+    data = EvaluationService.history(
+        page=page,
+        page_size=page_size,
+        asset_id=asset_id,
+        equipment=equipment,
+        status=status,
+        from_date=from_date,
+        to_date=to_date,
+    )
     return ok(data)
 
 

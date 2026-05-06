@@ -1,15 +1,232 @@
+/* ============================================================
+   AssetGuard AI — Enterprise Tech Design System
+   Matches login page: navy gradients + cyan accents + teal brand
+   ============================================================ */
+
 :root {
-  --font-family-base: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --color-bg-base: #f5f4f2;
-  --color-text-base: #1e1e1e;
-  --color-brand: #006d73;
+  /* Typography — matching login page */
+  --font-display: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-body: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
+
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+  --text-5xl: 3.75rem;
+
+  --font-light: 300;
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+
+  --leading-tight: 1.05;
+  --leading-snug: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --tracking-tighter: -0.04em;
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-wider: 0.08em;
+
+  /* Color Palette — matching login page */
+  /* Navy gradient (matches auth-left) */
+  --color-navy-900: #0a1628;
+  --color-navy-800: #0f2847;
+  --color-navy-700: #0d1f3c;
+  --color-navy-600: #162d50;
+
+  /* Light backgrounds (matches auth-right / body) */
+  --color-bg-base:    #f5f4f2;
+  --color-bg-raised:  #fafaf9;
+  --color-bg-card:    #ffffff;
+  --color-bg-hover:   #f1f5f9;
+  --color-bg-input:   #ffffff;
+  --color-bg-overlay: rgba(10, 22, 40, 0.65);
+
+  /* Text (matching form/text colors) */
+  --color-text-primary:    #0f172a;
+  --color-text-secondary:  #334155;
+  --color-text-tertiary:   #94a3b8;
+  --color-text-inverse:    #ffffff;
+
+  /* Brand — teal (matches login buttons/links) */
+  --color-brand:             #006d73;
+  --color-brand-light:       #007178;
+  --color-brand-dark:        #005a5f;
+  --color-brand-subtle:      rgba(0, 109, 115, 0.08);
+  --color-brand-glow:        rgba(0, 109, 115, 0.25);
+
+  /* Accent — cyan (matches hero dots/icons) */
+  --color-accent:            #38bdf8;
+  --color-accent-light:      #7dd3fc;
+  --color-accent-dark:       #0ea5e9;
+  --color-accent-subtle:     rgba(56, 189, 248, 0.10);
+  --color-accent-glow:       rgba(56, 189, 248, 0.30);
+
+  /* Semantic — matching login error/success patterns */
+  --color-success:           #006d73;
+  --color-success-bg:        rgba(0, 109, 115, 0.08);
+  --color-success-border:    rgba(0, 109, 115, 0.2);
+  --color-danger:            #dc2626;
+  --color-danger-bg:         #fef2f2;
+  --color-danger-border:     #fecaca;
+  --color-warning:           #d97706;
+  --color-warning-bg:        #fffbeb;
+  --color-info:              #38bdf8;
+  --color-info-bg:           rgba(56, 189, 248, 0.06);
+
+  /* Borders — matching login inputs/cards */
+  --color-border-subtle:    #f1f5f9;
+  --color-border-default:   #e2e8f0;
+  --color-border-strong:    #cbd5e1;
+  --color-border-accent:    rgba(0, 109, 115, 0.30);
+
+  /* Spacing */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  28px;
+  --space-8:  32px;
+  --space-9:  36px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* Radii — matching login (8-10px) */
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   10px;
+  --radius-xl:   14px;
+  --radius-full: 9999px;
+
+  /* Shadows — subtle (matching login cards) */
+  --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-xl:   0 16px 48px rgba(0, 0, 0, 0.10);
+  --shadow-glow: 0 0 20px rgba(0, 109, 115, 0.15);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* Layout */
+  --sidebar-width: 260px;
+  --topbar-height: 60px;
 }
 
-* {
-  font-family: var(--font-family-base);
+/* --- Global Reset --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 16px;
 }
 
 body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: var(--font-regular);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
   background: var(--color-bg-base);
-  color: var(--color-text-base);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, select, textarea {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
+
+::selection {
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* --- Animations --- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.page-enter {
+  animation: fadeInUp 0.35s ease both;
 }

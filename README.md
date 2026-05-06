@@ -399,7 +399,10 @@ Authorization: Bearer <manager_or_admin_token>
 | `POST` | `/api/v1/auth/login` | Public |
 | `POST` | `/api/v1/auth/set-initial-password` | Any authenticated user (first login only) |
 | `POST` | `/api/v1/auth/change-password` | Any authenticated user |
+| `GET` | `/api/v1/auth/users` | `System_Admin` |
 | `POST` | `/api/v1/auth/users` | `System_Admin` |
+| `PUT` | `/api/v1/auth/users/<id>` | `System_Admin` |
+| `DELETE` | `/api/v1/auth/users/<id>` | `System_Admin` |
 
 ### Locations
 
@@ -407,6 +410,8 @@ Authorization: Bearer <manager_or_admin_token>
 |--------|------|------------|
 | `GET` | `/api/v1/locations/` | Any authenticated user |
 | `POST` | `/api/v1/locations/` | `System_Admin`, `Asset_Manager` |
+| `PUT` | `/api/v1/locations/<id>` | `System_Admin`, `Asset_Manager` |
+| `DELETE` | `/api/v1/locations/<id>` | `System_Admin` |
 
 ### Assets
 
@@ -415,6 +420,8 @@ Authorization: Bearer <manager_or_admin_token>
 | `GET` | `/api/v1/assets/?locationId=...` | Any authenticated user |
 | `GET` | `/api/v1/assets/all` | Any authenticated user |
 | `POST` | `/api/v1/assets/` | `System_Admin`, `Asset_Manager` |
+| `PUT` | `/api/v1/assets/<id>` | `System_Admin`, `Asset_Manager` |
+| `DELETE` | `/api/v1/assets/<id>` | `System_Admin`, `Asset_Manager` |
 | `POST` | `/api/v1/assets/import-json-uploads` | `System_Admin` |
 | `GET` | `/api/v1/assets/<id>/load-capacities` | `System_Admin`, `Asset_Manager` |
 | `POST` | `/api/v1/assets/<id>/load-capacities` | `System_Admin`, `Asset_Manager` |

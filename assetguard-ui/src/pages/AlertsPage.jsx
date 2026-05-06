@@ -8,6 +8,7 @@ import {
   updateEmailTemplate,
   sendTestEmail,
 } from "../services/alertsApi";
+import "../styles/alerts.css";
 
 const defaultPreferences = {
   thresholdPercent: "85",
@@ -46,6 +47,8 @@ function AlertsPage() {
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [searchTerm, setSearchTerm] = useState("");
   const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     const loadAlertsData = async () => {
@@ -167,7 +170,7 @@ function AlertsPage() {
     }
   };
 
-  const filteredLogs = useMemo(() => {
+  const allFilteredLogs = useMemo(() => {
     return deliveryLogs.filter((log) => {
       const matchesStatus =
         statusFilter === "All Communications" || log.status === statusFilter;
@@ -179,6 +182,13 @@ function AlertsPage() {
       return matchesStatus && matchesSearch;
     });
   }, [deliveryLogs, statusFilter, searchTerm]);
+
+  const totalPages = Math.ceil(allFilteredLogs.length / PAGE_SIZE);
+  const filteredLogs = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    return allFilteredLogs.slice(start, end);
+  }, [allFilteredLogs, currentPage]);
 
   return (
     <>
@@ -243,45 +253,71 @@ function AlertsPage() {
           {logsLoading ? (
             <p className="muted-note alerts-inline-loading">Loading delivery logs...</p>
           ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>EVALUATION ID</th>
-                  <th>ASSET NAME</th>
-                  <th>RECIPIENT</th>
-                  <th>MAX / PLANNED</th>
-                  <th>OVER-CAP %</th>
-                  <th>STATUS</th>
-                  <th>TIME SENT</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLogs.map((log) => (
-                  <tr key={log.id}>
-                    <td className="alerts-id-cell">{log.id}</td>
-                    <td>{log.channel || "-"}</td>
-                    <td>{log.recipient || "-"}</td>
-                    <td>{log.maxPlanned || "-"}</td>
-                    <td>{log.overCap || "-"}</td>
-                    <td>
-                      <span
-                        className={`result-badge ${
-                          log.status === "Failed"
-                            ? "danger"
-                            : log.status === "Pending"
-                              ? "pending"
-                              : "ok"
-                        }`}
-                      >
-                        <span className="result-dot"></span>
-                        {log.status}
-                      </span>
-                    </td>
-                    <td>{log.sentAt || "-"}</td>
+            <>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>EVALUATION ID</th>
+                    <th>ASSET NAME</th>
+                    <th>RECIPIENT</th>
+                    <th>MAX / PLANNED</th>
+                    <th>OVER-CAP %</th>
+                    <th>STATUS</th>
+                    <th>TIME SENT</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredLogs.map((log) => (
+                    <tr key={log.id}>
+                      <td className="alerts-id-cell">{log.id}</td>
+                      <td>{log.channel || "-"}</td>
+                      <td>{log.recipient || "-"}</td>
+                      <td>{log.maxPlanned || "-"}</td>
+                      <td>{log.overCap || "-"}</td>
+                      <td>
+                        <span
+                          className={`result-badge ${
+                            log.status === "Failed"
+                              ? "danger"
+                              : log.status === "Pending"
+                                ? "pending"
+                                : "ok"
+                          }`}
+                        >
+                          <span className="result-dot"></span>
+                          {log.status}
+                        </span>
+                      </td>
+                      <td>{log.sentAt || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Pagination */}
+              <div className="pagination-container">
+                <div className="pagination-info">
+                  <span>Showing {filteredLogs.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0}-{Math.min(currentPage * PAGE_SIZE, allFilteredLogs.length)} of {allFilteredLogs.length} logs</span>
+                </div>
+                <div className="pagination-controls">
+                  <button
+                    className="pagination-button"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    ←
+                  </button>
+                  <span className="pagination-number">{currentPage}</span>
+                  <button
+                    className="pagination-button"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </section>

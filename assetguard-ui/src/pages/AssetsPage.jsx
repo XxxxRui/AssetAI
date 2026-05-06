@@ -101,7 +101,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
 
         // Fetch assets for selected location
         const response = await fetch(
-          `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=100`,
+          `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=${currentPage}&pageSize=10`,
           {
             method: "GET",
             headers: {
@@ -218,7 +218,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
         if (results.createdCount > 0 && selectedLocationId) {
           try {
             const refreshResponse = await fetch(
-              `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=100`,
+              `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=10`,
               {
                 method: "GET",
                 headers: {
@@ -287,7 +287,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
         console.log("Refreshing assets list...");
         
         const refreshResponse = await fetch(
-          `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=100`,
+          `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=10`,
           {
             method: "GET",
             headers: {
@@ -333,7 +333,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
   };
 
   const getStatusIndicatorColor = (status) => {
-    return status === "compliant" ? "#006767" : "#ba1a1a";
+    return status === "compliant" ? "#006d73" : "#ba1a1a";
   };
 
   const formatCapacityName = (name) => {
@@ -374,11 +374,9 @@ function AssetsPage({ user, onNavChange, onLogout }) {
           </div>
           <div className="header-actions">
             <button className="btn-secondary" onClick={handleBatchImport}>
-              <span className="icon">📥</span>
               <span>Batch Import</span>
             </button>
             <button className="btn-primary" onClick={handleCreateAsset}>
-              <span className="icon">➕</span>
               <span>Create New Asset</span>
             </button>
           </div>
@@ -398,7 +396,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
                 padding: "8px 12px",
                 borderRadius: "4px",
                 border: "1px solid #bdc9c8",
-                backgroundColor: "#f5f3f3",
+                backgroundColor: "#ffffff",
                 fontSize: "14px",
                 cursor: "pointer",
               }}
@@ -433,7 +431,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
             backgroundColor: "#dcfce7",
             border: "1px solid #86efac",
             borderRadius: "4px",
-            color: "#16a34a",
+            color: "#006d73",
             fontSize: "14px",
             fontWeight: "500"
           }}>
@@ -446,10 +444,10 @@ function AssetsPage({ user, onNavChange, onLogout }) {
           <div style={{
             padding: "12px 16px",
             marginBottom: "20px",
-            backgroundColor: "#fee2e2",
-            border: "1px solid #ef5350",
+            backgroundColor: "#fef2f2",
+            border: "1px solid #fecaca",
             borderRadius: "4px",
-            color: "#c62828",
+            color: "#dc2626",
             fontSize: "14px"
           }}>
             ⚠️ {error}
@@ -461,7 +459,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
           <div style={{
             padding: "20px",
             textAlign: "center",
-            color: "#666",
+            color: "#64748b",
             fontSize: "14px"
           }}>
             Loading assets...
@@ -487,7 +485,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
                     <tr key={asset.id} className="table-body-row">
                       <td className="table-cell table-data-cell">
                         <div className="asset-name-cell">
-                          <div className="status-indicator" style={{ backgroundColor: "#006767" }} />
+                          <div className="status-indicator" style={{ backgroundColor: "#006d73" }} />
                           <span className="asset-name">{asset.name}</span>
                         </div>
                       </td>
@@ -528,6 +526,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
                 <button
                   className="pagination-button"
                   onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={filteredAssets.length < 10}
                 >
                   →
                 </button>
@@ -565,24 +564,24 @@ function AssetsPage({ user, onNavChange, onLogout }) {
               padding: "12px 16px",
               backgroundColor: "#f0f4f8",
               borderRadius: "4px",
-              borderLeft: "4px solid #006767"
+              borderLeft: "4px solid #006d73"
             }}>
-              <h3 style={{ margin: "0 0 8px 0", color: "#006767" }}>Import Summary</h3>
-              <div style={{ fontSize: "13px", color: "#555" }}>
+              <h3 style={{ margin: "0 0 8px 0", color: "#006d73" }}>Import Summary</h3>
+              <div style={{ fontSize: "13px", color: "#64748b" }}>
                 <p><strong>Files Scanned:</strong> {importResult.filesScanned}</p>
-                <p><strong>Created:</strong> <span style={{ color: "#16a34a" }}>{importResult.createdCount}</span></p>
-                <p><strong>Rejected:</strong> <span style={{ color: importResult.rejectedCount > 0 ? "#dc2626" : "#16a34a" }}>{importResult.rejectedCount}</span></p>
+                <p><strong>Created:</strong> <span style={{ color: "#006d73" }}>{importResult.createdCount}</span></p>
+                <p><strong>Rejected:</strong> <span style={{ color: importResult.rejectedCount > 0 ? "#dc2626" : "#006d73" }}>{importResult.rejectedCount}</span></p>
               </div>
             </div>
 
             {importResult.items && importResult.items.length > 0 && (
               <div style={{ marginBottom: "20px" }}>
-                <h4 style={{ marginBottom: "12px", color: "#333", fontSize: "13px" }}>Created Assets:</h4>
-                <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #ddd", borderRadius: "4px", padding: "12px" }}>
+                <h4 style={{ marginBottom: "12px", color: "#0f172a", fontSize: "13px" }}>Created Assets:</h4>
+                <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #e2e8f0", borderRadius: "4px", padding: "12px" }}>
                   {importResult.items.map((item, idx) => (
                     <div key={idx} style={{ marginBottom: "12px", paddingBottom: "12px", borderBottom: idx < importResult.items.length - 1 ? "1px solid #eee" : "none", fontSize: "13px" }}>
                       <p style={{ margin: "0 0 4px 0", fontWeight: "500" }}>{item.asset.name}</p>
-                      <p style={{ margin: "0", color: "#666", fontSize: "12px" }}>File: {item.file}</p>
+                      <p style={{ margin: "0", color: "#64748b", fontSize: "12px" }}>File: {item.file}</p>
                     </div>
                   ))}
                 </div>
@@ -592,19 +591,19 @@ function AssetsPage({ user, onNavChange, onLogout }) {
             {importResult.rejected && importResult.rejected.length > 0 && (
               <div>
                 <h4 style={{ marginBottom: "12px", color: "#dc2626", fontSize: "13px" }}>Rejected Files:</h4>
-                <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #fecaca", borderRadius: "4px", padding: "12px", backgroundColor: "#fff5f5" }}>
+                <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #fecaca", borderRadius: "4px", padding: "12px", backgroundColor: "#fef2f2" }}>
                   {importResult.rejected.map((item, idx) => (
                     <div key={idx} style={{ marginBottom: "12px", paddingBottom: "12px", borderBottom: idx < importResult.rejected.length - 1 ? "1px solid #fecaca" : "none", fontSize: "12px" }}>
                       <p style={{ margin: "0 0 4px 0", fontWeight: "500", color: "#dc2626" }}>{item.file}</p>
-                      <p style={{ margin: "0", color: "#991b1b" }}>Reason: {item.reason}</p>
-                      <p style={{ margin: "0", color: "#7c2d12", fontSize: "11px" }}>{item.message}</p>
+                      <p style={{ margin: "0", color: "#dc2626" }}>Reason: {item.reason}</p>
+                      <p style={{ margin: "0", color: "#007178", fontSize: "11px" }}>{item.message}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
           </div>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px", paddingTop: "16px", borderTop: "1px solid #ddd" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px", paddingTop: "16px", borderTop: "1px solid #e2e8f0" }}>
             <button
               className="btn-primary"
               onClick={() => setImportResult(null)}

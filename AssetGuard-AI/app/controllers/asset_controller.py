@@ -151,6 +151,35 @@ def update_load_capacity(asset_id: int, capacity_id: int):
     return ok(data)
 
 
+@assets_bp.put("/<int:asset_id>")
+@require_roles(UserRole.SYSTEM_ADMIN.value, UserRole.ASSET_MANAGER.value)
+def update_asset(asset_id: int):
+    _ = get_auth_context()
+    body = request.get_json(silent=True) or {}
+    name = body.get("name")
+    location_name = body.get("locationName")
+    if name is None and location_name is None:
+        raise ApiError(
+            "At least one of name or locationName must be provided",
+            400,
+            code="validation_error",
+        )
+    data = AssetService.update_asset(
+        asset_id=asset_id,
+        name=name,
+        location_name=location_name,
+    )
+    return ok(data)
+
+
+@assets_bp.delete("/<int:asset_id>")
+@require_roles(UserRole.SYSTEM_ADMIN.value, UserRole.ASSET_MANAGER.value)
+def delete_asset(asset_id: int):
+    _ = get_auth_context()
+    AssetService.delete_asset(asset_id=asset_id)
+    return ok({"deleted": True})
+
+
 @assets_bp.delete("/<int:asset_id>/load-capacities/<int:capacity_id>")
 @require_roles(UserRole.SYSTEM_ADMIN.value, UserRole.ASSET_MANAGER.value)
 def delete_load_capacity(asset_id: int, capacity_id: int):

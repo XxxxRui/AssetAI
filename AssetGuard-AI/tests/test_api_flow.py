@@ -622,5 +622,283 @@ class ApiFlowTestCase(unittest.TestCase):
         self.assertFalse(login_after_change.get_json()["data"]["user"]["isFirstLogin"])
 
 
+
+    def test_new_endpoints(self):
+        """Coverage for new endpoints: Edit/Delete Asset, Edit/Delete User, History Filtering."""
+        admin_token = self._login("admin@demo.com", "admin123")
+        manager_token = self._login("manager@demo.com", "manager123")
+        contractor_token = self._login("contractor@demo.com", "contractor123")
+
+        # ── Get locations and an existing asset for editing ──────────────────
+        loc_res = self.client.get(
+            "/api/v1/locations/",
+            headers={"Authorization": f"Bearer {contractor_token}"},
+        )
+        locations = loc_res.get_json()["data"]
+        location_id = locations[0]["id"]
+
+        assets_res = self.client.get(
+            f"/api/v1/assets/?locationId={location_id}&page=1&pageSize=50",
+            headers={"Authorization": f"Bearer {contractor_token}"},
+        )
+        items = assets_res.get_json()["data"]["items"]
+        asset = next((a for a in items if a["name"] == "Berth 5"), items[0])
+        asset_id = asset["id"]
+
+        # ===== Edit Asset =====
+        # Success: rename
+        edit_asset = self.client.put(
+            f"/api/v1/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {manager_token}"},
+            json={"name": "Berth 5 Renamed"},
+        )
+        self.assertEqual(edit_asset.status_code, 200, edit_asset.get_json())
+        self.assertEqual(edit_asset.get_json()["data"]["name"], "Berth 5 Renamed")
+
+        # Success: rename back
+        self.client.put(
+            f"/api/v1/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {manager_token}"},
+            json={"name": "Berth 5"},
+        )
+
+        # 403: contractor cannot edit
+        forbidden_edit = self.client.put(
+            f"/api/v1/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {contractor_token}"},
+            json={"name": "Nope"},
+        )
+        self.assertEqual(forbidden_edit.status_code, 403)
+
+        # 400: no fields
+        no_fields = self.client.put(
+            f"/api/v1/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {manager_token}"},
+            json={},
+        )
+        self.assertEqual(no_fields.status_code, 400)
+
+        # 404: not found
+        not_found_edit = self.client.put(
+            "/api/v1/assets/99999",
+            headers={"Authorization": f"Bearer {manager_token}"},
+            json={"name": "Ghost"},
+        )
+        self.assertEqual(not_found_edit.status_code, 404)
+
+        # ===== Delete Asset =====
+        # Create a temp asset to delete
+        create_res = self.client.post(
+            "/api/v1/assets/",
+            headers={"Authorization": f"Bearer {manager_token}"},
+            json={
+                "locationName": locations[0]["name"],
+                "name": "Temp To Delete",
+                "loadCapacities": [{"name": "max point load", "metric": "kN", "maxLoad": 100}],
+            },
+        )
+        temp_asset_id = create_res.get_json()["data"]["id"]
+        self.assertEqual(create_res.status_code, 201)
+
+        # 403: contractor cannot delete
+        forbidden_del = self.client.delete(
+            f"/api/v1/assets/{temp_asset_id}",
+            headers={"Authorization": f"Bearer {contractor_token}"},
+        )
+        self.assertEqual(forbidden_del.status_code, 403)
+
+        # Success: delete
+        del_res = self.client.delete(
+            f"/api/v1/assets/{temp_asset_id}",
+            headers={"Authorization": f"Bearer {manager_token}"},
+        )
+        self.assertEqual(del_res.status_code, 200)
+        self.assertTrue(del_res.get_json()["data"]["deleted"])
+
+        # 404: already deleted
+        double_del = self.client.delete(
+            f"/api/v1/assets/{temp_asset_id}",
+            headers={"Authorization": f"Bearer {manager_token}"},
+        )
+        self.assertEqual(double_del.status_code, 404)
+
+        # ===== History Filtering =====
+        hist_all = self.client.get(
+            "/api/v1/evaluations/history?page=1&pageSize=50",
+            headers={"Authorization": f"Bearer {manager_token}"},
+        )
+        self.assertEqual(hist_all.status_code, 200)
+        hist_items = hist_all.get_json()["data"]["items"]
+        self.assertGreaterEqual(len(hist_items), 1)
+
+        # Filter by assetId
+        hist_by_asset = self.client.get(
+            f"/api/v1/evaluations/history?page=1&pageSize=50&assetId={asset_id}",
+            headers={"Authorization": f"Bearer {manager_token}"},
+        )
+        self.assertEqual(hist_by_asset.status_code, 200)
+        for item in hist_by_asset.get_json()["data"]["items"]:
+            self.assertEqual(item["assetId"], asset_id)
+
+        # Filter by equipment
+        hist_by_eq = self.client.get(
+            "/api/v1/evaluations/history?page=1&pageSize=50&equipment=Crane with outriggers",
+            headers={"Authorization": f"Bearer {manager_token}"},
+        )
+        self.assertEqual(hist_by_eq.status_code, 200)
+
+        # Filter by status
+        hist_by_status = self.client.get(
+            "/api/v1/evaluations/history?page=1&pageSize=50&status=Compliant",
+            headers={"Authorization": f"Bearer {manager_token}"},
+        )
+        self.assertEqual(hist_by_status.status_code, 200)
+        for item in hist_by_status.get_json()["data"]["items"]:
+            self.assertEqual(item["status"], "Compliant")
+
+        # Filter by date
+        hist_by_date = self.client.get(
+            "/api/v1/evaluations/history?page=1&pageSize=50&fromDate=2020-01-01&toDate=2099-12-31",
+            headers={"Authorization": f"Bearer {manager_token}"},
+        )
+        self.assertEqual(hist_by_date.status_code, 200)
+        self.assertGreaterEqual(hist_by_date.get_json()["data"]["total"], 1)
+
+        # Invalid status
+        bad_status = self.client.get(
+            "/api/v1/evaluations/history?status=Bogus",
+            headers={"Authorization": f"Bearer {manager_token}"},
+        )
+        self.assertEqual(bad_status.status_code, 400)
+
+        # Invalid date
+        bad_date = self.client.get(
+            "/api/v1/evaluations/history?fromDate=not-a-date",
+            headers={"Authorization": f"Bearer {manager_token}"},
+        )
+        self.assertEqual(bad_date.status_code, 400)
+
+        # 403: contractor cannot view history
+        contractor_hist = self.client.get(
+            "/api/v1/evaluations/history?page=1&pageSize=20",
+            headers={"Authorization": f"Bearer {contractor_token}"},
+        )
+        self.assertEqual(contractor_hist.status_code, 403)
+
+        # ===== List Users =====
+        list_users = self.client.get(
+            "/api/v1/auth/users?page=1&pageSize=20",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        self.assertEqual(list_users.status_code, 200)
+        self.assertGreaterEqual(len(list_users.get_json()["data"]["items"]), 1)
+
+        # 403: contractor cannot list users
+        forbidden_list = self.client.get(
+            "/api/v1/auth/users",
+            headers={"Authorization": f"Bearer {contractor_token}"},
+        )
+        self.assertEqual(forbidden_list.status_code, 403)
+
+        # ===== Edit User =====
+        # Create a user to edit
+        new_user = self.client.post(
+            "/api/v1/auth/users",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={"email": "edit_me@demo.com", "password": "oldpw123", "role": "Contractors"},
+        )
+        edit_user_id = new_user.get_json()["data"]["id"]
+        self.assertEqual(new_user.status_code, 201)
+
+        # Success: change email and role
+        edit_user = self.client.put(
+            f"/api/v1/auth/users/{edit_user_id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={"email": "edited@demo.com", "role": "Asset_Manager"},
+        )
+        self.assertEqual(edit_user.status_code, 200)
+        self.assertEqual(edit_user.get_json()["data"]["email"], "edited@demo.com")
+        self.assertEqual(edit_user.get_json()["data"]["role"], "Asset_Manager")
+
+        # Success: reset password
+        reset_pw = self.client.put(
+            f"/api/v1/auth/users/{edit_user_id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={"password": "newResetPw1"},
+        )
+        self.assertEqual(reset_pw.status_code, 200)
+        self.assertTrue(reset_pw.get_json()["data"]["isFirstLogin"])
+
+        # 403: contractor cannot edit
+        forbidden_edit_user = self.client.put(
+            f"/api/v1/auth/users/{edit_user_id}",
+            headers={"Authorization": f"Bearer {contractor_token}"},
+            json={"email": "bad@demo.com"},
+        )
+        self.assertEqual(forbidden_edit_user.status_code, 403)
+
+        # 400: no fields
+        no_fields_user = self.client.put(
+            f"/api/v1/auth/users/{edit_user_id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={},
+        )
+        self.assertEqual(no_fields_user.status_code, 400)
+
+        # 404: not found
+        not_found_user = self.client.put(
+            "/api/v1/auth/users/99999",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={"email": "ghost@demo.com"},
+        )
+        self.assertEqual(not_found_user.status_code, 404)
+
+        # 409: duplicate email
+        dup_email = self.client.put(
+            f"/api/v1/auth/users/{edit_user_id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={"email": "admin@demo.com"},
+        )
+        self.assertEqual(dup_email.status_code, 409)
+
+        # ===== Delete User =====
+        # 403: contractor cannot delete
+        forbidden_del_user = self.client.delete(
+            f"/api/v1/auth/users/{edit_user_id}",
+            headers={"Authorization": f"Bearer {contractor_token}"},
+        )
+        self.assertEqual(forbidden_del_user.status_code, 403)
+
+        # 400: cannot delete self
+        self_del = self.client.delete(
+            f"/api/v1/auth/users/1",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        self.assertEqual(self_del.status_code, 400)
+        self.assertEqual(self_del.get_json()["code"], "cannot_delete_self")
+
+        # Success: delete
+        del_user = self.client.delete(
+            f"/api/v1/auth/users/{edit_user_id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        self.assertEqual(del_user.status_code, 200)
+        self.assertTrue(del_user.get_json()["data"]["deleted"])
+
+        # 404: already deleted
+        double_del_user = self.client.delete(
+            f"/api/v1/auth/users/{edit_user_id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        self.assertEqual(double_del_user.status_code, 404)
+
+        # ===== History: fromDate filters to empty when date is in future =====
+        hist_future = self.client.get(
+            "/api/v1/evaluations/history?fromDate=2100-01-01",
+            headers={"Authorization": f"Bearer {manager_token}"},
+        )
+        self.assertEqual(hist_future.status_code, 200)
+        self.assertEqual(hist_future.get_json()["data"]["total"], 0)
+
 if __name__ == "__main__":
     unittest.main()
