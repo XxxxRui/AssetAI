@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import AppLayout from "../components/layout/AppLayout";
+import Modal from "../components/modal/Modal";
+import CreateUserForm from "../components/forms/CreateUserForm";
 import { requestJson } from "../services/apiClient";
 import "../styles/admin-users.css";
 
@@ -11,6 +13,7 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
 
   const PAGE_SIZE = 5;
 
@@ -58,13 +61,35 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
   };
 
   const handleAddNewUser = () => {
-    console.log("Add new user");
-    // TODO: Open modal or navigate to user creation form
+    setIsCreateUserModalOpen(true);
+  };
+
+  const handleCreateUserSubmit = async (formData) => {
+    try {
+      const result = await requestJson("/auth/users", {
+        method: "POST",
+        body: JSON.stringify(formData),
+      });
+
+      if (result && result.id) {
+        alert("User created successfully!");
+        setIsCreateUserModalOpen(false);
+        // Refresh the users list
+        setCurrentPage(1);
+      }
+    } catch (err) {
+      alert(err.message || "Failed to create user");
+      return Promise.reject(err);
+    }
+  };
+
+  const handleCancelCreateUser = () => {
+    setIsCreateUserModalOpen(false);
   };
 
   const handleUserAction = (userId) => {
+    // TODO: Implement action menu or edit user functionality
     console.log("Action for user:", userId);
-    // TODO: Open context menu or action dialog
   };
 
   const handlePrevPage = () => {
@@ -229,6 +254,19 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
             </div>
           )}
         </div>
+
+        {/* Create User Modal */}
+        <Modal
+          isOpen={isCreateUserModalOpen}
+          title="Add New User"
+          onClose={handleCancelCreateUser}
+          size="small"
+        >
+          <CreateUserForm
+            onSubmit={handleCreateUserSubmit}
+            onCancel={handleCancelCreateUser}
+          />
+        </Modal>
       </div>
     </AppLayout>
   );
