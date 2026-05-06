@@ -86,15 +86,20 @@ git push -u origin <your-branch-name>
 
 ### Requirements
 
-- Python 3.11+
+- Python 3.11+ (on your `PATH` as `python` / `python3`)
 - Node.js and npm
-- For **macOS Apple Silicon only**: `uv` package manager (see [Initialise and run](#initialise-and-run) section)
+- For **macOS Apple Silicon** (optional): install `uv` if you use [`start-dev-uv.sh`](#initialise-and-run) — not required for `./start-dev.sh`
+
+**You do not need to create or activate a virtual environment before the first run** if you use the repository root bootstrap scripts (`start-dev.bat`, `start-dev.sh`, or `start-dev-uv.sh`). They create and use `AssetGuard-AI/.venv`, install backend dependencies, apply migrations, conditionally run `seed`, then start the dev servers.  
+Only use the [manual venv steps](#optional-manual-virtual-environment-backend-only) below if you are **not** using those scripts and intend to run `flask` commands yourself.
 
 ---
 
 ## 1. Main Backend — `AssetGuard-AI`
 
-### Set up the virtual environment
+### Optional: manual virtual environment (backend-only)
+
+Skip this subsection when using `start-dev.bat`, `start-dev.sh`, or `start-dev-uv.sh`.
 
 **Windows (PowerShell):**
 
@@ -135,8 +140,7 @@ AI_JSON_UPLOADS_DIR=/path/to/gjp-assetguard-extraction-tool/uploads
 
 ### Initialise and run
 
-Recommended: use the workspace bootstrap scripts from the repository root.  
-These scripts start both backend and frontend.
+Recommended: from the **repository root**, run a single bootstrap script — **no manual venv setup required** for that path.
 
 **Windows (PowerShell):**
 
@@ -167,7 +171,12 @@ chmod +x ./start-dev.sh
 ./start-dev.sh
 ```
 
-Bootstrap behavior:
+What the scripts start:
+
+- **`start-dev.bat` / `start-dev.sh`**: backend (`http://127.0.0.1:5000`), frontend (Vite — URL printed in that process), and **optionally** the AI extraction tool under `gjp-assetguard-extraction-tool` on **`http://127.0.0.1:5001`** when that folder exists. Backend and frontend always start; extraction tool bootstrap or runtime failures are isolated and **do not** stop the backend or frontend.
+- **`start-dev-uv.sh`**: backend and frontend only (uses `uv`/`uv pip` under `AssetGuard-AI/.venv`; does not launch the extraction tool).
+
+Bootstrap behavior (all three scripts, for the backend):
 
 - Always runs `flask db upgrade` first
 - Runs `flask seed` when either:
@@ -177,7 +186,7 @@ Bootstrap behavior:
 
 **Note on package managers**: The `start-dev-uv.sh` script uses `uv` for faster dependency installation on macOS Apple Silicon, while `start-dev.sh` uses the standard `pip` approach.
 
-Manual backend-only alternative:
+Manual backend-only alternative (**requires** an environment where backend dependencies are already installed — typically after [manual venv](#optional-manual-virtual-environment-backend-only)):
 
 ```bash
 # In AssetGuard-AI/
