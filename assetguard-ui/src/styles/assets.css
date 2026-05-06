@@ -92,16 +92,30 @@
 }
 
 /* Search & Filter Area */
-.search-filter-area {
-  margin-bottom: 24px;
+.filter-search-row {
   display: flex;
-  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+  align-items: flex-end;
+}
+
+.location-selector-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.search-filter-area {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .search-input-wrapper {
   position: relative;
   width: 100%;
-  max-width: 576px;
+  max-width: 400px;
 }
 
 .search-icon {

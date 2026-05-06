@@ -13,10 +13,17 @@ const adminSubmenu = [
   { label: "Location", value: "Admin/Location" },
 ];
 
-function Sidebar({ activeItem = "Dashboard", onSelectItem }) {
+function Sidebar({ activeItem = "Dashboard", onSelectItem, user = null }) {
   const [adminExpanded, setAdminExpanded] = useState(
     activeItem?.startsWith("Admin")
   );
+
+  // Only show Admin menu if user has System_Admin role
+  const isAdmin = user?.role === "System_Admin";
+  
+  // For Contractors, only show Evaluation page
+  const isContractor = user?.role === "Contractors";
+  const displayMenuItems = isContractor ? ["Evaluation"] : menuItems;
 
   const handleAdminClick = () => {
     setAdminExpanded(!adminExpanded);
@@ -38,7 +45,7 @@ function Sidebar({ activeItem = "Dashboard", onSelectItem }) {
       </div>
 
       <nav className="sidebar-nav">
-        {menuItems.map((item) => (
+        {displayMenuItems.map((item) => (
           <button
             key={item}
             className={`sidebar-link ${item === activeItem ? "active" : ""}`}
@@ -49,38 +56,40 @@ function Sidebar({ activeItem = "Dashboard", onSelectItem }) {
           </button>
         ))}
 
-        {/* Admin Menu Item with Submenu */}
-        <div className="sidebar-menu-group">
-          <button
-            className={`sidebar-link ${
-              activeItem?.startsWith("Admin") ? "active" : ""
-            } ${adminExpanded ? "expanded" : ""}`}
-            type="button"
-            onClick={handleAdminClick}
-          >
-            Admin
-            <span className="submenu-toggle">
-              {adminExpanded ? "▼" : "▶"}
-            </span>
-          </button>
+        {/* Admin Menu Item with Submenu - Only show for System_Admin */}
+        {isAdmin && (
+          <div className="sidebar-menu-group">
+            <button
+              className={`sidebar-link ${
+                activeItem?.startsWith("Admin") ? "active" : ""
+              } ${adminExpanded ? "expanded" : ""}`}
+              type="button"
+              onClick={handleAdminClick}
+            >
+              Admin
+              <span className="submenu-toggle">
+                {adminExpanded ? "▼" : "▶"}
+              </span>
+            </button>
 
-          {adminExpanded && (
-            <div className="sidebar-submenu">
-              {adminSubmenu.map((item) => (
-                <button
-                  key={item.value}
-                  className={`sidebar-submenu-link ${
-                    activeItem === item.value ? "active" : ""
-                  }`}
-                  type="button"
-                  onClick={() => handleSubmenuClick(item.value)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+            {adminExpanded && (
+              <div className="sidebar-submenu">
+                {adminSubmenu.map((item) => (
+                  <button
+                    key={item.value}
+                    className={`sidebar-submenu-link ${
+                      activeItem === item.value ? "active" : ""
+                    }`}
+                    type="button"
+                    onClick={() => handleSubmenuClick(item.value)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </nav>
     </aside>
   );

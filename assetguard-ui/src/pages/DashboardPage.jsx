@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import DashboardHeader from "../components/dashboard/DashboardHeader";
 import StatCard from "../components/dashboard/StatCard";
@@ -10,6 +10,8 @@ import HistoryPage from "./HistoryPage";
 import AdminUsersPage from "./AdminUsersPage";
 import AdminLocationPage from "./AdminLocationPage";
 import AlertsPage from "./AlertsPage";
+
+const NAV_STORAGE_KEY = "assetguard:active-nav";
 
 const recentEvaluations = [
   ["Main Turbine G7", "Siemens SGT-800", "Compliant", "14:22 PM"],
@@ -33,7 +35,35 @@ const navDescriptions = {
 };
 
 function DashboardPage({ user, onLogout }) {
-  const [activeNav, setActiveNav] = useState("Dashboard");
+  // Restore navigation state from localStorage, default to Dashboard or Evaluation for Contractors
+  const [activeNav, setActiveNav] = useState(() => {
+    // For Contractors, default to Evaluation page
+    if (user?.role === "Contractors") {
+      return "Evaluation";
+    }
+    try {
+      return localStorage.getItem(NAV_STORAGE_KEY) || "Dashboard";
+    } catch {
+      return "Dashboard";
+    }
+  });
+
+  // Save navigation state to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(NAV_STORAGE_KEY, activeNav);
+    } catch {
+      // Ignore storage failures
+    }
+  }, [activeNav]);
+
+  // For Contractors, only allow Evaluation page
+  const isContractor = user?.role === "Contractors";
+  if (isContractor && activeNav !== "Evaluation") {
+    // Redirect contractors to Evaluation page
+    setTimeout(() => setActiveNav("Evaluation"), 0);
+    return <EvaluationPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
+  }
 
   if (activeNav === "Evaluation") {
     return <EvaluationPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
@@ -47,12 +77,34 @@ function DashboardPage({ user, onLogout }) {
     return <HistoryPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
   }
 
-  if (activeNav === "Admin/User") {
-    return <AdminUsersPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
-  }
+  // Admin pages - Check user role and protect access
+  if (activeNav === "Admin/User" || activeNav === "Admin/Location") {
+    // If user is not System_Admin, redirect to Dashboard
+    if (user?.role !== "System_Admin") {
+      // Reset activeNav to Dashboard to prevent access
+      setTimeout(() => setActiveNav("Dashboard"), 0);
+      return (
+        <AppLayout activeNav="Dashboard" onNavChange={setActiveNav} user={user} onLogout={onLogout}>
+          <section className="module-placeholder">
+            <h1>Access Denied</h1>
+            <p>You do not have permission to access the Admin section. Only System Administrators can access this area.</p>
+            <button className="btn-primary" onClick={() => setActiveNav("Dashboard")}
+              style={{ marginTop: "16px", padding: "12px 24px", border: "none", borderRadius: "4px", cursor: "pointer" }}
+            >
+              Return to Dashboard
+            </button>
+          </section>
+        </AppLayout>
+      );
+    }
 
-  if (activeNav === "Admin/Location") {
-    return <AdminLocationPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
+    if (activeNav === "Admin/User") {
+      return <AdminUsersPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
+    }
+
+    if (activeNav === "Admin/Location") {
+      return <AdminLocationPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
+    }
   }
 
   if (activeNav === "Alerts") {

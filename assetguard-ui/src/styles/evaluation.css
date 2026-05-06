@@ -488,28 +488,10 @@
 /* Result Footer */
 .result-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding: 24px 0;
   border-top: 1px solid #ebe8e2;
-}
-
-.system-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'Quicksand', sans-serif;
-  font-size: 13px;
-  color: #64748b;
-}
-
-.status-indicator {
-  font-size: 8px;
-  color: #10b981;
-}
-
-.status-text {
-  font-size: 12px;
 }
 
 .result-actions {

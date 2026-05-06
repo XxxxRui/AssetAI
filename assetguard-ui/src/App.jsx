@@ -4,6 +4,8 @@ import PasswordSetupPage from "./pages/PasswordSetupPage";
 import DashboardPage from "./pages/DashboardPage";
 import {
   setAuthToken,
+  clearAuthToken,
+  restoreAuthToken,
   setUnauthorizedHandler,
 } from "./services/authSession";
 
@@ -21,12 +23,26 @@ function App() {
     } catch {
       // Ignore storage failures (e.g. private mode restrictions).
     }
+    clearAuthToken(); // Clear stored token from localStorage
     setToken("");
-    setAuthToken("");
+    setAuthToken(""); // Also clear from memory
     setUser(null);
     setCurrentPage("login");
     setSystemMessage(message);
   };
+
+  useEffect(() => {
+    // On app startup, try to restore token from localStorage
+    const restoredToken = restoreAuthToken();
+    if (restoredToken) {
+      setToken(restoredToken);
+      setAuthToken(restoredToken);
+      // Note: We don't have user data, but the token is valid.
+      // The app will fetch user data when needed or show a default state.
+      // For now, proceed to dashboard - user data can be loaded separately if needed
+      setCurrentPage("dashboard");
+    }
+  }, []);
 
   useEffect(() => {
     setUnauthorizedHandler(() => {

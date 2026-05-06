@@ -111,3 +111,38 @@ def create_user():
         },
         status_code=201,
     )
+
+
+@auth_bp.get("/users")
+@require_roles(UserRole.SYSTEM_ADMIN.value)
+def list_users():
+    """
+    List all users (System_Admin only).
+
+    Query parameters: page (default 1), pageSize (default 20).
+    """
+    _ = get_auth_context()
+    page = request.args.get("page", 1, type=int)
+    page_size = request.args.get("pageSize", 20, type=int)
+
+    users, total = AuthService.list_users(page=page, page_size=page_size)
+    
+    pages = (total + page_size - 1) // page_size if page_size > 0 else 1
+
+    return ok(
+        {
+            "items": [
+                {
+                    "id": user.id,
+                    "email": user.email,
+                    "role": user.role.value,
+                    "isFirstLogin": user.is_first_login,
+                }
+                for user in users
+            ],
+            "page": page,
+            "pageSize": page_size,
+            "total": total,
+            "pages": pages,
+        }
+    )
