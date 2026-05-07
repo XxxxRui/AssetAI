@@ -1240,6 +1240,69 @@ List all past evaluation log entries, most recent first.
 
 ---
 
+### GET `/api/v1/evaluations/history/user/<user_id>`
+
+List evaluation log entries for a specific user, most recent first. Supports the same filters and pagination as the general history endpoint.
+
+**Permissions:** `System_Admin`, `Asset_Manager`.
+
+**Path parameters:**
+
+| Parameter | Type | Required | Notes |
+|-----------|------|----------|-------|
+| `user_id` | integer | Yes | ID of the user whose evaluation logs to retrieve |
+
+**Query parameters:**
+
+| Parameter | Type | Required | Default | Notes |
+|-----------|------|----------|---------|-------|
+| `page` | integer | No | `1` | Must be ≥ 1 |
+| `pageSize` | integer | No | `20` | Must be 1–200 |
+| `assetId` | integer | No | — | Filter by asset ID |
+| `equipment` | string | No | — | Filter by exact equipment type name |
+| `status` | string | No | — | Filter by `"Compliant"` or `"Non-Compliant"` |
+| `fromDate` | string | No | — | Filter records on or after this date (format: `YYYY-MM-DD`) |
+| `toDate` | string | No | — | Filter records before this date (format: `YYYY-MM-DD`) |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": 7,
+        "assetId": 10,
+        "assetName": "Berth 5 Deck",
+        "equipment": "Crane with outriggers",
+        "equipmentModel": "LTM 1100",
+        "loadParameterValue": 500.0,
+        "loadParameterMetric": "kN",
+        "matchedCapacityName": "max point load",
+        "status": "Compliant",
+        "overloadPercentage": 0.0,
+        "remark": "Pre-lift check",
+        "evaluatedAt": "2026-03-24T12:34:56+08:00"
+      }
+    ],
+    "page": 1,
+    "pageSize": 20,
+    "total": 1,
+    "pages": 1
+  }
+}
+```
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `400` | `validation_error` | Pagination parameters out of range, invalid date format, or invalid status value |
+| `403` | — | Caller is `Contractors` (insufficient permission) |
+
+---
+
 ### GET `/api/v1/evaluations/dashboard-summary`
 
 Return aggregated evaluation statistics for the dashboard, including totals, overload stats, equipment breakdown, top assets, and recent evaluations.
