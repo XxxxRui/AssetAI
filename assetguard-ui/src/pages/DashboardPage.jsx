@@ -51,6 +51,7 @@ function DashboardPage({ user, onLogout }) {
   // State for API data
   const [totalAssets, setTotalAssets] = useState(0);
   const [totalEvaluations, setTotalEvaluations] = useState(0);
+  const [recentEvaluationsData, setRecentEvaluationsData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Save navigation state to localStorage whenever it changes
@@ -98,9 +99,9 @@ function DashboardPage({ user, onLogout }) {
           console.error("Assets error response:", errorData);
         }
 
-        // Fetch total evaluations
+        // Fetch total evaluations and recent evaluations data
         const evaluationsResponse = await fetch(
-          "/api/v1/evaluations/history?pageSize=1",
+          "/api/v1/evaluations/history?pageSize=20",
           { headers }
         );
         console.log("Evaluations response status:", evaluationsResponse.status);
@@ -109,6 +110,29 @@ function DashboardPage({ user, onLogout }) {
           console.log("Evaluations response:", evaluationsData);
           const total = evaluationsData.data?.total || evaluationsData.total || 0;
           setTotalEvaluations(total);
+
+          // Format recent evaluations data
+          const items = evaluationsData.data?.items || [];
+          const formattedEvaluations = items.slice(0, 3).map((item) => {
+            // Format time with date - convert ISO 8601 to "May 6, 2026, 10:49 PM" format
+            const date = new Date(item.evaluatedAt);
+            const dateTimeStr = date.toLocaleString("en-US", { 
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "2-digit", 
+              minute: "2-digit",
+              hour12: true 
+            });
+            
+            return [
+              item.assetName || "N/A",
+              item.equipment || "N/A",
+              item.status || "N/A",
+              dateTimeStr
+            ];
+          });
+          setRecentEvaluationsData(formattedEvaluations);
         } else {
           const errorData = await evaluationsResponse.json();
           console.error("Evaluations error response:", errorData);
@@ -217,7 +241,7 @@ function DashboardPage({ user, onLogout }) {
         <SectionHeader title="Recent Evaluations" action="VIEW HISTORY" />
         <DataTable
           columns={["ASSET", "EQUIPMENT", "RESULT", "TIME"]}
-          rows={recentEvaluations}
+          rows={recentEvaluationsData.length > 0 ? recentEvaluationsData : recentEvaluations}
           resultColumnIndex={2}
         />
       </section>
