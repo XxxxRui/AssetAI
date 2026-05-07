@@ -193,11 +193,20 @@ function AlertsPage() {
   return (
     <>
       <header className="alerts-header">
-        <h1 className="alerts-title">Alerts &amp; Communication Logs</h1>
-        <p className="alerts-subtitle alerts-subtitle-readable">
-          Track and manage system-generated email notifications, including load
-          warnings and compliance reports.
-        </p>
+        <div className="header-left">
+          <h1 className="header-title">Alerts &amp; Communication Logs</h1>
+          <p className="header-description">
+            Track and manage system-generated email notifications, including load
+            warnings and compliance reports.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn-new-evaluation"
+          onClick={() => setIsTemplateEditorOpen(true)}
+        >
+          <span>Template Editor</span>
+        </button>
       </header>
 
       <section className="dashboard-section">
@@ -236,16 +245,6 @@ function AlertsPage() {
               <option>Last 90 Days</option>
             </select>
           </label>
-        </div>
-
-        <div className="alerts-page-actions">
-          <button
-            type="button"
-            className="new-evaluation-btn"
-            onClick={() => setIsTemplateEditorOpen(true)}
-          >
-            TEMPLATE EDITOR
-          </button>
         </div>
 
         <div className="table-card">
