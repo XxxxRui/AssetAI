@@ -6,7 +6,6 @@ from concurrent.futures import ThreadPoolExecutor
 from flask import current_app
 
 from sqlalchemy.exc import SQLAlchemyError
-
 from app.extensions import db
 from app.models import EmailJob
 from app.services.evaluation_service import EvaluationService
