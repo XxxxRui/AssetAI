@@ -9,6 +9,7 @@ AssetGuard AI is a Flask-based REST backend that provides:
 - Asset and load-capacity management
 - Engineering load compliance evaluation
 - Bulk import of AI-generated asset JSON payloads
+- Email alert configuration and delivery logs
 
 **Base path** for all application APIs:
 
@@ -30,7 +31,8 @@ AssetGuard AI is a Flask-based REST backend that provides:
 8. [Location APIs](#location-apis)
 9. [Asset APIs](#asset-apis)
 10. [Evaluation APIs](#evaluation-apis)
-11. [AI JSON Import Workflow](#ai-json-import-workflow)
+11. [Alert APIs](#alert-apis)
+12. [AI JSON Import Workflow](#ai-json-import-workflow)
 
 ---
 
@@ -146,6 +148,12 @@ Equipment types are mapped internally to the relevant load capacity.
 | `Storage Load` | Uniform Distributor Load | `kPa` | `max uniform distributor load` |
 | `Vessel` | Displacement | `t` | `max displacement size` |
 
+### Timestamp Format
+
+Timestamps are returned as ISO 8601 strings without microseconds, e.g. `"2026-05-07T14:30:00+08:00"`.
+
+> **Note:** The login endpoint (`POST /auth/login`) returns timestamps in UTC with microseconds (`"2026-05-07T06:30:00.123456+00:00"`). This is a known inconsistency — all other endpoints use local timezone without microseconds.
+
 ---
 
 ## Health
@@ -190,7 +198,9 @@ Sign in with email and password.
       "id": 1,
       "email": "admin@demo.com",
       "role": "System_Admin",
-      "isFirstLogin": false
+      "isFirstLogin": false,
+      "createdAt": "2026-05-06T10:00:00.123456+00:00",
+      "updatedAt": "2026-05-07T06:30:00.654321+00:00"
     }
   }
 }
@@ -213,8 +223,6 @@ Set a personal password on the user's first login and clear the `isFirstLogin` f
 
 **Permissions:** Any authenticated user whose `isFirstLogin` is `true`.
 
-No old password is required because the caller is already authenticated via the Bearer token issued at login. Use `POST /auth/change-password` for all subsequent password changes.
-
 **Request body:**
 
 ```json
@@ -222,10 +230,6 @@ No old password is required because the caller is already authenticated via the 
   "newPassword": "myNewSecurePassword123"
 }
 ```
-
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `newPassword` | string | Yes | Must not be empty |
 
 **Response `200`:**
 
@@ -248,54 +252,6 @@ No old password is required because the caller is already authenticated via the 
 
 ---
 
-### POST `/api/v1/auth/users`
-
-Create a new user account.
-
-**Permissions:** `System_Admin` only.
-
-**Request body:**
-
-```json
-{
-  "email": "manager2@demo.com",
-  "password": "manager456",
-  "role": "Asset_Manager"
-}
-```
-
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `email` | string | Yes | Must be unique |
-| `password` | string | Yes | |
-| `role` | string | Yes | One of `System_Admin`, `Asset_Manager`, `Contractors` |
-
-**Response `201`:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 5,
-    "email": "manager2@demo.com",
-    "role": "Asset_Manager",
-    "isFirstLogin": true
-  }
-}
-```
-
-All admin-created users start with `isFirstLogin: true`. They must call `POST /auth/set-initial-password` after their first login.
-
-**Possible errors:**
-
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | Required field missing or role value is invalid |
-| `403` | — | Caller is not `System_Admin` |
-| `409` | `email_exists` | Email address already registered |
-
----
-
 ### POST `/api/v1/auth/change-password`
 
 Change the password of the currently authenticated user.
@@ -310,11 +266,6 @@ Change the password of the currently authenticated user.
   "newPassword": "newSecurePassword456"
 }
 ```
-
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `currentPassword` | string | Yes | Must match the user's existing password |
-| `newPassword` | string | Yes | Must not be empty or identical to `currentPassword` |
 
 **Response `200`:**
 
@@ -335,6 +286,49 @@ Change the password of the currently authenticated user.
 | `401` | `missing_token` | No Bearer token provided |
 | `401` | `invalid_credentials` | `currentPassword` does not match the user's actual password |
 
+---
+
+### POST `/api/v1/auth/users`
+
+Create a new user account.
+
+**Permissions:** `System_Admin` only.
+
+**Request body:**
+
+```json
+{
+  "email": "manager2@demo.com",
+  "password": "manager456",
+  "role": "Asset_Manager"
+}
+```
+
+**Response `201`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 5,
+    "email": "manager2@demo.com",
+    "role": "Asset_Manager",
+    "isFirstLogin": true,
+    "createdAt": "2026-05-07T14:30:00+08:00",
+    "updatedAt": "2026-05-07T14:30:00+08:00"
+  }
+}
+```
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `400` | `validation_error` | Required field missing or role value is invalid |
+| `403` | — | Caller is not `System_Admin` |
+| `409` | `email_exists` | Email address already registered |
+
+---
 
 ### GET `/api/v1/auth/users`
 
@@ -360,7 +354,9 @@ List all users with pagination.
         "id": 1,
         "email": "admin@demo.com",
         "role": "System_Admin",
-        "isFirstLogin": false
+        "isFirstLogin": false,
+        "createdAt": "2026-05-06T10:00:00+08:00",
+        "updatedAt": "2026-05-07T14:30:00+08:00"
       }
     ],
     "page": 1,
@@ -398,12 +394,6 @@ Update a user's email, role, or password.
 
 At least one of `email`, `role`, or `password` must be present. When `password` is provided the user's `isFirstLogin` flag is reset to `true`.
 
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `email` | string | No | Must be unique |
-| `role` | string | No | One of `System_Admin`, `Asset_Manager`, `Contractors` |
-| `password` | string | No | When set, resets `isFirstLogin` to `true` |
-
 **Response `200`:**
 
 ```json
@@ -413,7 +403,9 @@ At least one of `email`, `role`, or `password` must be present. When `password` 
     "id": 5,
     "email": "newemail@demo.com",
     "role": "Asset_Manager",
-    "isFirstLogin": false
+    "isFirstLogin": true,
+    "createdAt": "2026-05-06T08:00:00+08:00",
+    "updatedAt": "2026-05-07T14:35:00+08:00"
   }
 }
 ```
@@ -460,7 +452,7 @@ Delete a user account. The caller cannot delete their own account.
 
 ### GET `/api/v1/locations/`
 
-Return all shared locations.
+Return all shared locations. Not paginated.
 
 **Permissions:** Any authenticated user.
 
@@ -470,8 +462,18 @@ Return all shared locations.
 {
   "success": true,
   "data": [
-    { "id": 1, "name": "Berth 5" },
-    { "id": 2, "name": "Berth 8" }
+    {
+      "id": 1,
+      "name": "Berth 5",
+      "createdAt": "2026-05-06T10:00:00+08:00",
+      "updatedAt": "2026-05-07T12:00:00+08:00"
+    },
+    {
+      "id": 2,
+      "name": "Berth 8",
+      "createdAt": "2026-05-06T10:30:00+08:00",
+      "updatedAt": "2026-05-06T10:30:00+08:00"
+    }
   ]
 }
 ```
@@ -499,7 +501,9 @@ Create a new location.
   "success": true,
   "data": {
     "id": 3,
-    "name": "North Wharf"
+    "name": "North Wharf",
+    "createdAt": "2026-05-07T14:30:00+08:00",
+    "updatedAt": "2026-05-07T14:30:00+08:00"
   }
 }
 ```
@@ -511,15 +515,6 @@ Create a new location.
 | `400` | `validation_error` | `name` is missing or blank |
 | `403` | — | Caller lacks permission |
 | `409` | `location_exists` | Location name already exists |
-
-**Response fields:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | number | Location ID |
-| `name` | string | Location name |
-| `createdAt` | string (ISO 8601) | Creation timestamp (UTC) |
-| `updatedAt` | string (ISO 8601) | Last update timestamp (UTC) |
 
 ---
 
@@ -545,8 +540,8 @@ Rename an existing location.
   "data": {
     "id": 3,
     "name": "South Wharf",
-    "createdAt": "2026-05-06T10:30:00+00:00",
-    "updatedAt": "2026-05-06T12:15:00+00:00"
+    "createdAt": "2026-05-07T14:30:00+08:00",
+    "updatedAt": "2026-05-07T14:35:00+08:00"
   }
 }
 ```
@@ -606,13 +601,6 @@ List assets for a specific location, including their load capacities.
 | `pageSize` | integer | No | `20` | Must be 1–200 |
 | `q` | string | No | — | Case-insensitive substring filter on asset name |
 
-**Example request:**
-
-```http
-GET /api/v1/assets/?locationId=1&page=1&pageSize=20
-Authorization: Bearer <token>
-```
-
 **Response `200`:**
 
 ```json
@@ -624,13 +612,17 @@ Authorization: Bearer <token>
         "id": 10,
         "name": "Berth 5 Deck",
         "locationId": 1,
+        "createdAt": "2026-05-06T10:00:00+08:00",
+        "updatedAt": "2026-05-07T12:00:00+08:00",
         "loadCapacities": [
           {
             "id": 21,
             "name": "max point load",
             "metric": "kN",
             "maxLoad": 1200.0,
-            "details": "outrigger"
+            "details": "outrigger",
+            "createdAt": "2026-05-06T10:00:00+08:00",
+            "updatedAt": "2026-05-06T10:00:00+08:00"
           }
         ]
       }
@@ -676,7 +668,9 @@ List all assets across all locations (without load capacities).
       {
         "id": 10,
         "name": "Berth 5 Deck",
-        "locationId": 1
+        "locationId": 1,
+        "createdAt": "2026-05-06T10:00:00+08:00",
+        "updatedAt": "2026-05-07T12:00:00+08:00"
       }
     ],
     "page": 1,
@@ -724,23 +718,13 @@ Create an asset with one or more load capacities.
 }
 ```
 
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `locationName` | string | Yes | See location-resolution behaviour below |
-| `name` | string | Yes | Must be unique within the resolved location |
-| `loadCapacities` | array | Yes | At least one entry required |
-| `loadCapacities[].name` | string | Yes | See [Load Capacity Names](#load-capacity-names) enum |
-| `loadCapacities[].metric` | string | Yes | Must match the required metric for the given name |
-| `loadCapacities[].maxLoad` | number | Yes | Must be > 0 |
-| `loadCapacities[].details` | string | No | Free-text annotation |
-
 **Location resolution:**
 
 The service attempts to fuzzy-match `locationName` against existing locations (normalised whitespace, punctuation, and casing). If the best-match score reaches the internal threshold, the existing location is reused. Otherwise a new location is created automatically.
 
 **Capacity-metric pairing:**
 
-Each `loadCapacities[].name` is bound to a single allowed metric. Providing a mismatched pair (e.g. `"max point load"` with metric `"t"`) returns a `400 invalid_capacity_metric_pair` error. See the [Enum Reference](#enum-reference) table.
+Each `loadCapacities[].name` is bound to a single allowed metric. Providing a mismatched pair returns a `400 invalid_capacity_metric_pair` error. See the [Enum Reference](#enum-reference) table.
 
 **Duplicate protection:**
 
@@ -756,20 +740,26 @@ Each `loadCapacities[].name` is bound to a single allowed metric. Providing a mi
     "id": 11,
     "name": "Imported Deck Asset",
     "locationId": 1,
+    "createdAt": "2026-05-07T14:30:00+08:00",
+    "updatedAt": "2026-05-07T14:30:00+08:00",
     "loadCapacities": [
       {
         "id": 31,
         "name": "max point load",
         "metric": "kN",
         "maxLoad": 1200.0,
-        "details": "Max Outrigger Load: 1200 kN"
+        "details": "Max Outrigger Load: 1200 kN",
+        "createdAt": "2026-05-07T14:30:00+08:00",
+        "updatedAt": "2026-05-07T14:30:00+08:00"
       },
       {
         "id": 32,
         "name": "max axle load",
         "metric": "t",
         "maxLoad": 85.0,
-        "details": "Max Axle Load: 85 t"
+        "details": "Max Axle Load: 85 t",
+        "createdAt": "2026-05-07T14:30:00+08:00",
+        "updatedAt": "2026-05-07T14:30:00+08:00"
       }
     ]
   }
@@ -790,99 +780,6 @@ Each `loadCapacities[].name` is bound to a single allowed metric. Providing a mi
 
 ---
 
-### POST `/api/v1/assets/import-json-uploads`
-
-Batch-import all `*.json` asset-payload files found in the configured AI uploads directory.
-
-**Permissions:** `System_Admin` only.
-
-**Request body (optional):**
-
-```json
-{
-  "directoryPath": "D:/path/to/gjp-assetguard-extraction-tool/uploads"
-}
-```
-
-If `directoryPath` is omitted, the server uses the value of `AI_JSON_UPLOADS_DIR` from its configuration (defaults to the `gjp-assetguard-extraction-tool/uploads` folder alongside the server).
-
-**How it works:**
-
-1. Scans the directory for `*.json` files, sorted alphabetically.
-2. Parses each file and validates the payload structure.
-3. Attempts to create each asset via the same logic as `POST /assets/`.
-4. Returns a summary of created and rejected files in one batch response.
-
-**Response `201`** (when at least one asset was created) **or `200`** (when no new assets were created):
-
-```json
-{
-  "success": true,
-  "data": {
-    "directory": "D:/path/to/gjp-assetguard-extraction-tool/uploads",
-    "filesScanned": 3,
-    "createdCount": 1,
-    "rejectedCount": 2,
-    "items": [
-      {
-        "file": "01_design_criteria_asset_payload_valid.json",
-        "asset": {
-          "id": 12,
-          "name": "Imported From Uploads A",
-          "locationId": 1,
-          "loadCapacities": [
-            {
-              "id": 41,
-              "name": "max point load",
-              "metric": "kN",
-              "maxLoad": 321.0,
-              "details": null
-            }
-          ]
-        }
-      }
-    ],
-    "rejected": [
-      {
-        "file": "02_design_criteria_asset_payload_duplicate.json",
-        "reason": "asset_already_exists",
-        "message": "Asset with the same location and name already exists",
-        "assetName": "Imported From Uploads A"
-      },
-      {
-        "file": "03_misc_invalid.json",
-        "reason": "invalid_asset_payload",
-        "message": "JSON must contain locationName, name, and loadCapacities[]"
-      }
-    ]
-  }
-}
-```
-
-**Rejection reasons in `rejected[]`:**
-
-| `reason` | Description |
-|----------|-------------|
-| `invalid_json` | File is not valid JSON |
-| `invalid_payload` | Top-level JSON is not an object |
-| `invalid_asset_payload` | Object is missing `locationName`, `name`, or `loadCapacities` |
-| `asset_already_exists` | Asset with the same name already exists at the resolved location |
-| `invalid_metric` | A metric value in the file is not in the allowed enum |
-| `invalid_capacity_name` | A capacity name in the file is not in the allowed enum |
-| `invalid_capacity_metric_pair` | Metric does not match the required metric for the capacity name |
-| `duplicate_capacity` | Same capacity name appears more than once in `loadCapacities` |
-| `validation_error` | Other validation failure (e.g. blank name, non-positive maxLoad) |
-
-**Possible errors:**
-
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | `directoryPath` is required but not provided and no default is configured |
-| `403` | — | Caller is not `System_Admin` |
-| `404` | `json_uploads_dir_not_found` | The specified directory does not exist |
-
----
-
 ### PUT `/api/v1/assets/<asset_id>`
 
 Update an asset's name and/or location.
@@ -900,11 +797,6 @@ Update an asset's name and/or location.
 
 At least one of `name` or `locationName` must be present. When `locationName` is provided, the same fuzzy-matching and auto-creation logic used by `POST /assets/` applies.
 
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `name` | string | No | Must not be empty; must be unique within the resolved location |
-| `locationName` | string | No | See location-resolution behaviour |
-
 **Response `200`:**
 
 ```json
@@ -914,13 +806,17 @@ At least one of `name` or `locationName` must be present. When `locationName` is
     "id": 11,
     "name": "Renamed Asset",
     "locationId": 3,
+    "createdAt": "2026-05-07T14:30:00+08:00",
+    "updatedAt": "2026-05-07T14:45:00+08:00",
     "loadCapacities": [
       {
         "id": 31,
         "name": "max point load",
         "metric": "kN",
         "maxLoad": 1200.0,
-        "details": null
+        "details": null,
+        "createdAt": "2026-05-07T14:30:00+08:00",
+        "updatedAt": "2026-05-07T14:30:00+08:00"
       }
     ]
   }
@@ -940,7 +836,7 @@ At least one of `name` or `locationName` must be present. When `locationName` is
 
 ### DELETE `/api/v1/assets/<asset_id>`
 
-Delete an asset and all its associated load capacities.
+Delete an asset and all its associated load capacities and evaluation logs.
 
 **Permissions:** `System_Admin`, `Asset_Manager`.
 
@@ -979,7 +875,9 @@ List all load capacities for a single asset.
     "asset": {
       "id": 10,
       "name": "Berth 5 Deck",
-      "locationId": 1
+      "locationId": 1,
+      "createdAt": "2026-05-06T10:00:00+08:00",
+      "updatedAt": "2026-05-07T12:00:00+08:00"
     },
     "items": [
       {
@@ -987,7 +885,9 @@ List all load capacities for a single asset.
         "name": "max point load",
         "metric": "kN",
         "maxLoad": 1200.0,
-        "details": "outrigger"
+        "details": "outrigger",
+        "createdAt": "2026-05-06T10:00:00+08:00",
+        "updatedAt": "2026-05-06T10:00:00+08:00"
       }
     ]
   }
@@ -1020,13 +920,6 @@ Add a new load capacity row to an existing asset.
 }
 ```
 
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `name` | string | Yes | See [Load Capacity Names](#load-capacity-names) enum |
-| `metric` | string | Yes | Must match the required metric for the given name |
-| `maxLoad` | number | Yes | Must be > 0 |
-| `details` | string | No | Free-text annotation |
-
 **Response `201`:**
 
 ```json
@@ -1036,14 +929,18 @@ Add a new load capacity row to an existing asset.
     "asset": {
       "id": 10,
       "name": "Berth 5 Deck",
-      "locationId": 1
+      "locationId": 1,
+      "createdAt": "2026-05-06T10:00:00+08:00",
+      "updatedAt": "2026-05-07T14:50:00+08:00"
     },
     "capacity": {
       "id": 42,
       "name": "max axle load",
       "metric": "t",
       "maxLoad": 80.0,
-      "details": "temp cap"
+      "details": "temp cap",
+      "createdAt": "2026-05-07T14:50:00+08:00",
+      "updatedAt": "2026-05-07T14:50:00+08:00"
     }
   }
 }
@@ -1080,15 +977,6 @@ At least one of `name`, `metric`, `maxLoad`, or `details` must be present in the
 }
 ```
 
-**Updatable fields:**
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `name` | string | Must be a valid capacity name; metric compatibility is **not** re-validated when only `name` changes |
-| `metric` | string | Must be a valid metric value |
-| `maxLoad` | number | Must be > 0 |
-| `details` | string | Set to `null` or empty to clear |
-
 **Response `200`:**
 
 ```json
@@ -1098,14 +986,18 @@ At least one of `name`, `metric`, `maxLoad`, or `details` must be present in the
     "asset": {
       "id": 10,
       "name": "Berth 5 Deck",
-      "locationId": 1
+      "locationId": 1,
+      "createdAt": "2026-05-06T10:00:00+08:00",
+      "updatedAt": "2026-05-07T14:55:00+08:00"
     },
     "capacity": {
       "id": 42,
       "name": "max axle load",
       "metric": "t",
       "maxLoad": 850.0,
-      "details": "updated cap"
+      "details": "updated cap",
+      "createdAt": "2026-05-07T14:50:00+08:00",
+      "updatedAt": "2026-05-07T14:55:00+08:00"
     }
   }
 }
@@ -1155,7 +1047,7 @@ Remove a load capacity row from an asset.
 
 ### GET `/api/v1/evaluations/equipment-options`
 
-Return the full list of supported equipment types with their expected load parameter label and metric. Use this endpoint to populate form dropdowns dynamically.
+Return the full list of supported equipment types with their expected load parameter label and metric.
 
 **Permissions:** Any authenticated user.
 
@@ -1203,7 +1095,7 @@ Return the full list of supported equipment types with their expected load param
 
 ### POST `/api/v1/evaluations/check`
 
-Evaluate whether a proposed load complies with the selected asset's stored capacity. The result is logged and can be retrieved via the history endpoint.
+Evaluate whether a proposed load complies with the selected asset's stored capacity. The result is logged and can be retrieved via the history endpoint. A log entry is created with `evaluated_at` but the response does NOT include the timestamp.
 
 **Permissions:** Any authenticated user.
 
@@ -1260,11 +1152,13 @@ The service maps the `equipment` string to the required capacity name and metric
 }
 ```
 
+> **Note:** This endpoint does not return `evaluatedAt`, `createdAt`, or `updatedAt` in the response. Use `GET /evaluations/history` to retrieve logged timestamps.
+
 **Response fields:**
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `asset` | object | Asset summary |
+| `asset` | object | Asset summary (without timestamps) |
 | `equipment` | string | Equipment type used |
 | `equipmentModel` | string \| null | Equipment model/identifier |
 | `loadParameterValue` | number | Submitted load value |
@@ -1272,7 +1166,7 @@ The service maps the `equipment` string to the required capacity name and metric
 | `matchedCapacityName` | string | The capacity name that was checked |
 | `capacityMaxLoad` | number | The stored maximum load |
 | `status` | string | `"Compliant"` or `"Non-Compliant"` |
-| `overloadPercentage` | number | `0.0` when compliant; ratio of excess over max load otherwise (e.g. `0.25` = 25% over limit) |
+| `overloadPercentage` | number | Raw decimal: `0.0` when compliant; ratio of excess over max load otherwise (e.g. `0.25` = 25%) |
 | `remark` | string \| null | Remark as saved |
 
 **Possible errors:**
@@ -1307,13 +1201,6 @@ List all past evaluation log entries, most recent first.
 | `fromDate` | string | No | — | Filter records on or after this date (format: `YYYY-MM-DD`) |
 | `toDate` | string | No | — | Filter records before this date (format: `YYYY-MM-DD`) |
 
-**Example request with filters:**
-
-```http
-GET /api/v1/evaluations/history?page=1&pageSize=20&assetId=10&status=Non-Compliant&fromDate=2026-01-01&toDate=2026-12-31
-Authorization: Bearer <token>
-```
-
 **Response `200`:**
 
 ```json
@@ -1333,7 +1220,7 @@ Authorization: Bearer <token>
         "status": "Compliant",
         "overloadPercentage": 0.0,
         "remark": "Pre-lift check",
-        "evaluatedAt": "2026-03-24T12:34:56Z"
+        "evaluatedAt": "2026-03-24T12:34:56+08:00"
       }
     ],
     "page": 1,
@@ -1353,9 +1240,325 @@ Authorization: Bearer <token>
 
 ---
 
+### GET `/api/v1/evaluations/dashboard-summary`
+
+Return aggregated evaluation statistics for the dashboard, including totals, overload stats, equipment breakdown, top assets, and recent evaluations.
+
+**Permissions:** `System_Admin`, `Asset_Manager`.
+
+**Query parameters:**
+
+| Parameter | Type | Required | Default | Notes |
+|-----------|------|----------|---------|-------|
+| `limit` | integer | No | `10` | Maximum 100. Controls `recentEvaluations` and `topAssets` count. |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "totals": {
+      "evaluations": 42,
+      "compliant": 35,
+      "nonCompliant": 7,
+      "complianceRatePercentage": 83.33
+    },
+    "overloadStats": {
+      "averageOverloadPercentage": 12.5,
+      "maxOverloadPercentage": 45.0
+    },
+    "equipmentStats": [
+      { "equipment": "Crane with outriggers", "evaluationCount": 20 },
+      { "equipment": "Mobile crane", "evaluationCount": 15 }
+    ],
+    "topAssets": [
+      { "assetName": "Berth 5 Deck", "evaluationCount": 12 },
+      { "assetName": "Berth 8 Platform", "evaluationCount": 8 }
+    ],
+    "recentEvaluations": [
+      {
+        "id": 7,
+        "assetName": "Berth 5 Deck",
+        "equipment": "Crane with outriggers",
+        "status": "Compliant",
+        "loadParameterValue": 500.0,
+        "loadParameterMetric": "kN",
+        "overloadPercentage": 0.0,
+        "evaluatedAt": "2026-05-07T14:30:00+08:00"
+      }
+    ]
+  }
+}
+```
+
+> **Note:** `overloadPercentage` in this endpoint is **already multiplied by 100** (i.e. `25.0` means 25%), unlike `POST /evaluations/check` and `GET /evaluations/history` where it is a raw decimal (`0.25` means 25%). This is a known inconsistency.
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `400` | `validation_error` | Invalid limit value |
+| `403` | — | Caller lacks permission |
+
+---
+
+## Alert APIs
+
+### GET `/api/v1/alerts/email-logs`
+
+Return recent email delivery log entries.
+
+**Permissions:** `System_Admin`, `Asset_Manager`.
+
+**Query parameters:**
+
+| Parameter | Type | Required | Default | Notes |
+|-----------|------|----------|---------|-------|
+| `limit` | integer | No | `100` | Maximum 500 |
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "EV-0001",
+        "channel": "Berth 5 Deck",
+        "recipient": "ops.team@assetguard.io",
+        "status": "Delivered",
+        "maxPlanned": "1200.0 kN",
+        "overCap": "25.0%",
+        "sentAt": "2026-05-07T14:30:00+08:00"
+      }
+    ]
+  }
+}
+```
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `403` | — | Caller lacks permission |
+
+---
+
+### GET `/api/v1/alerts/email-preferences`
+
+Return the current email alert configuration.
+
+**Permissions:** `System_Admin`, `Asset_Manager`.
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "escalationThresholdPercent": 20,
+    "digestTimeUtc": "09:00",
+    "recipientsCsv": "asset.manager@demo.com,safety@demo.com",
+    "sendOnNonCompliant": true
+  }
+}
+```
+
+---
+
+### PUT `/api/v1/alerts/email-preferences`
+
+Update email alert configuration. Partial update — only send the fields you want to change.
+
+**Permissions:** `System_Admin`, `Asset_Manager`.
+
+**Request body (any subset):**
+
+```json
+{
+  "escalationThresholdPercent": 15,
+  "sendOnNonCompliant": false
+}
+```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `escalationThresholdPercent` | integer | Overload threshold percentage |
+| `digestTimeUtc` | string | HH:MM format |
+| `recipientsCsv` | string | Comma-separated email addresses |
+| `sendOnNonCompliant` | boolean | Enable/disable auto-send on non-compliant results |
+
+**Response `200`:** Same shape as `GET /alerts/email-preferences`.
+
+---
+
+### GET `/api/v1/alerts/email-template`
+
+Return the current email template.
+
+**Permissions:** `System_Admin`, `Asset_Manager`.
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "subject": "[ASSETGUARD] THRESHOLD BREACH DETECTED",
+    "body": "A monitored asset has exceeded the configured load threshold. Please review the latest evaluation report immediately."
+  }
+}
+```
+
+---
+
+### PUT `/api/v1/alerts/email-template`
+
+Update the email template. Partial update — only send the fields you want to change.
+
+**Permissions:** `System_Admin`, `Asset_Manager`.
+
+**Request body (any subset):**
+
+```json
+{
+  "subject": "[ASSETGUARD] Alert: Threshold Breach"
+}
+```
+
+**Response `200`:** Same shape as `GET /alerts/email-template`.
+
+---
+
+### POST `/api/v1/alerts/test-email`
+
+Send a test email using the current configuration.
+
+**Permissions:** `System_Admin`, `Asset_Manager`.
+
+No request body required.
+
+**Response `200`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "EV-0042",
+    "channel": "Test",
+    "recipient": "asset.manager@demo.com",
+    "status": "Delivered",
+    "maxPlanned": "N/A",
+    "overCap": "N/A",
+    "sentAt": "2026-05-07T14:30:00+08:00"
+  }
+}
+```
+
+---
+
 ## AI JSON Import Workflow
 
-The AI extraction module (`gjp-assetguard-extraction-tool`) generates one JSON file per detected asset. Each file must conform to this schema:
+### POST `/api/v1/assets/import-json-uploads`
+
+Batch-import all `*.json` asset-payload files found in the configured AI uploads directory.
+
+**Permissions:** `System_Admin` only.
+
+**Request body (optional):**
+
+```json
+{
+  "directoryPath": "D:/path/to/gjp-assetguard-extraction-tool/uploads"
+}
+```
+
+If `directoryPath` is omitted, the server uses the value of `AI_JSON_UPLOADS_DIR` from its configuration (defaults to the `gjp-assetguard-extraction-tool/uploads` folder alongside the server).
+
+**How it works:**
+
+1. Scans the directory for `*.json` files, sorted alphabetically.
+2. Parses each file and validates the payload structure.
+3. Attempts to create each asset via the same logic as `POST /assets/`.
+4. Returns a summary of created and rejected files in one batch response.
+
+**Response `201`** (when at least one asset was created) **or `200`** (when no new assets were created):
+
+```json
+{
+  "success": true,
+  "data": {
+    "directory": "D:/path/to/gjp-assetguard-extraction-tool/uploads",
+    "filesScanned": 3,
+    "createdCount": 1,
+    "rejectedCount": 2,
+    "items": [
+      {
+        "file": "01_design_criteria_asset_payload_valid.json",
+        "asset": {
+          "id": 12,
+          "name": "Imported From Uploads A",
+          "locationId": 1,
+          "createdAt": "2026-05-07T14:30:00+08:00",
+          "updatedAt": "2026-05-07T14:30:00+08:00",
+          "loadCapacities": [
+            {
+              "id": 41,
+              "name": "max point load",
+              "metric": "kN",
+              "maxLoad": 321.0,
+              "details": null,
+              "createdAt": "2026-05-07T14:30:00+08:00",
+              "updatedAt": "2026-05-07T14:30:00+08:00"
+            }
+          ]
+        }
+      }
+    ],
+    "rejected": [
+      {
+        "file": "02_design_criteria_asset_payload_duplicate.json",
+        "reason": "asset_already_exists",
+        "message": "Asset with the same location and name already exists",
+        "assetName": "Imported From Uploads A"
+      },
+      {
+        "file": "03_misc_invalid.json",
+        "reason": "invalid_asset_payload",
+        "message": "JSON must contain locationName, name, and loadCapacities[]"
+      }
+    ]
+  }
+}
+```
+
+**Rejection reasons in `rejected[]`:**
+
+| `reason` | Description |
+|----------|-------------|
+| `invalid_json` | File is not valid JSON |
+| `invalid_payload` | Top-level JSON is not an object |
+| `invalid_asset_payload` | Object is missing `locationName`, `name`, or `loadCapacities` |
+| `asset_already_exists` | Asset with the same name already exists at the resolved location |
+| `invalid_metric` | A metric value in the file is not in the allowed enum |
+| `invalid_capacity_name` | A capacity name in the file is not in the allowed enum |
+| `invalid_capacity_metric_pair` | Metric does not match the required metric for the capacity name |
+| `duplicate_capacity` | Same capacity name appears more than once in `loadCapacities` |
+| `validation_error` | Other validation failure (e.g. blank name, non-positive maxLoad) |
+
+**Possible errors:**
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `400` | `validation_error` | `directoryPath` is required but not provided and no default is configured |
+| `403` | — | Caller is not `System_Admin` |
+| `404` | `json_uploads_dir_not_found` | The specified directory does not exist |
+
+---
+
+Each imported JSON file must conform to this schema:
 
 ```json
 {
@@ -1378,11 +1581,11 @@ The AI extraction module (`gjp-assetguard-extraction-tool`) generates one JSON f
 }
 ```
 
-When `POST /api/v1/assets/import-json-uploads` is called:
+## Known Inconsistencies
 
-1. All `*.json` files in the uploads directory are read in alphabetical order.
-2. Each file is validated (structure, enum values, metric–name pairing, positive `maxLoad`).
-3. Valid files that are not duplicates are imported as new assets.
-4. A single batch response is returned with per-file outcomes.
-
-The server's `AI_JSON_UPLOADS_DIR` configuration key sets the default directory. This can be overridden per-request using the `directoryPath` body field.
+| Issue | Detail |
+|-------|--------|
+| **Login timestamp format** | `POST /auth/login` returns timestamps in UTC with microseconds (`.isoformat()`). All other endpoints strip microseconds and use local timezone (`_iso()`). |
+| **Missing `evaluatedAt` on check** | `POST /evaluations/check` stores `evaluated_at` in the database but does not return it in the response. Use `GET /evaluations/history` to get timestamps. |
+| **`overloadPercentage` scale** | `POST /evaluations/check` and `GET /evaluations/history` return raw decimal (e.g. `0.25`). `GET /evaluations/dashboard-summary` returns percentage already multiplied by 100 (e.g. `25.0`). |
+| **Locations not paginated** | `GET /locations/` returns a flat array without pagination. |
