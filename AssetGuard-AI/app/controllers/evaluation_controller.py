@@ -2,6 +2,7 @@ from flask import Blueprint, request
 
 from app.models.user import UserRole
 from app.services.evaluation_service import EvaluationService
+from app.services.email_job_service import EmailJobService
 from app.utils.auth import get_auth_context, require_auth, require_roles
 from app.utils.equipment_mapping import equipment_options
 from app.utils.errors import ApiError
@@ -102,5 +103,5 @@ def dashboard_summary():
 @require_auth
 def send_email(evaluation_id: int):
     ctx = get_auth_context()
-    data = EvaluationService.send_evaluation_email(evaluation_id=evaluation_id, requester_email=ctx.email)
+    data = EmailJobService.create_job(evaluation_id=evaluation_id, requester_email=ctx.email)
     return ok(data)

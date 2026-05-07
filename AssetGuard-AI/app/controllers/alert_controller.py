@@ -2,6 +2,7 @@ from flask import Blueprint, request
 
 from app.models.user import UserRole
 from app.services.alert_service import AlertService
+from app.services.email_job_service import EmailJobService
 from app.utils.auth import require_roles
 from app.utils.errors import ApiError
 from app.utils.responses import ok
@@ -48,3 +49,9 @@ def put_email_template():
 @require_roles(UserRole.SYSTEM_ADMIN.value, UserRole.ASSET_MANAGER.value)
 def post_test_email():
     return ok(AlertService.send_test_email())
+
+
+@alerts_bp.get("/email-jobs/<string:job_id>")
+@require_roles(UserRole.SYSTEM_ADMIN.value, UserRole.ASSET_MANAGER.value, UserRole.CONTRACTORS.value)
+def get_email_job(job_id: str):
+    return ok(EmailJobService.get_job(job_id))

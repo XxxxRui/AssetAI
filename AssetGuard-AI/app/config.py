@@ -31,3 +31,5 @@ class Config:
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", os.getenv("MAIL_PASSWORD", "2811e435f6d0b5"))
     SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "noreply@assetguard.local")
     SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
+
+    EMAIL_ASYNC_ENABLED = os.getenv("EMAIL_ASYNC_ENABLED", os.getenv("FLASK_ENV", "production") != "development" and "true" or "false").lower() == "true"
