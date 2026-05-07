@@ -1,16 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../../styles/create-asset-form.css";
 
-function CreateUserForm({ onSubmit, onCancel }) {
+function CreateUserForm({ onSubmit, onCancel, initialData = null }) {
+  const isEditMode = !!initialData;
+  
   const [formData, setFormData] = useState({
-    email: "",
+    email: initialData?.email || "",
     password: "",
-    role: "Contractors",
+    role: initialData?.role || "Contractors",
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const ROLE_OPTIONS = ["System_Admin", "Asset_Manager", "Contractors"];
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        email: initialData.email || "",
+        password: "",
+        role: initialData.role || "Contractors",
+      });
+    }
+  }, [initialData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -24,10 +36,20 @@ function CreateUserForm({ onSubmit, onCancel }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validate required fields
-    if (!formData.email || !formData.password || !formData.role) {
-      setError("Email, password, and role are required");
-      return;
+    // For create mode: email and password are required
+    // For edit mode: at least one field should be changed
+    if (!isEditMode) {
+      // Create mode validation
+      if (!formData.email || !formData.password || !formData.role) {
+        setError("Email, password, and role are required");
+        return;
+      }
+    } else {
+      // Edit mode validation
+      if (!formData.email) {
+        setError("Email is required");
+        return;
+      }
     }
 
     // Validate email format
@@ -37,16 +59,31 @@ function CreateUserForm({ onSubmit, onCancel }) {
       return;
     }
 
-    // Validate password length
-    if (formData.password.length < 6) {
+    // Validate password length if provided
+    if (formData.password && formData.password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
+    }
+
+    // Build submission data
+    let submissionData = {
+      email: formData.email,
+      role: formData.role,
+    };
+
+    // Only include password if provided (create mode requires it, edit mode is optional)
+    if (!isEditMode || (isEditMode && formData.password)) {
+      if (!isEditMode && !formData.password) {
+        setError("Password is required");
+        return;
+      }
+      submissionData.password = formData.password;
     }
 
     // Call onSubmit callback
     if (onSubmit) {
       setIsSubmitting(true);
-      onSubmit(formData).finally(() => {
+      onSubmit(submissionData).finally(() => {
         setIsSubmitting(false);
       });
     }
@@ -94,7 +131,7 @@ function CreateUserForm({ onSubmit, onCancel }) {
         {/* Password Field */}
         <div className="form-field">
           <label htmlFor="password" className="form-label">
-            Password
+            Password {isEditMode ? "(leave blank to keep current)" : ""}
           </label>
           <input
             id="password"
@@ -102,10 +139,10 @@ function CreateUserForm({ onSubmit, onCancel }) {
             name="password"
             value={formData.password}
             onChange={handleInputChange}
-            placeholder="Enter a secure password"
+            placeholder={isEditMode ? "Optional - leave blank to keep current" : "Enter a secure password"}
             className="form-input"
             disabled={isSubmitting}
-            required
+            required={!isEditMode}
           />
         </div>
 
@@ -147,7 +184,7 @@ function CreateUserForm({ onSubmit, onCancel }) {
           className="btn-primary"
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Creating..." : "Create User"}
+          {isSubmitting ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update User" : "Create User")}
         </button>
       </div>
     </form>

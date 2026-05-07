@@ -1,10 +1,11 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import "../../styles/modal.css";
 
 function Modal({ isOpen, title, subtitle, onClose, children, size = "medium" }) {
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div className="modal-overlay" onClick={onClose}>
       <div
         className={`modal-content modal-${size}`}
@@ -28,6 +29,9 @@ function Modal({ isOpen, title, subtitle, onClose, children, size = "medium" }) 
       </div>
     </div>
   );
+
+  // Render to document.body to avoid being affected by parent transform styles
+  return createPortal(modalContent, document.body);
 }
 
 export default Modal;

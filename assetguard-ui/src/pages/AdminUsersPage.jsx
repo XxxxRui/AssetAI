@@ -14,41 +14,48 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
+  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   const PAGE_SIZE = 10;
 
+  // Function to fetch users from backend
+  const fetchUsers = async (page = currentPage) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result = await requestJson(`/auth/users?page=${page}&pageSize=${PAGE_SIZE}`);
+      
+      if (result && result.items) {
+        // Map backend data to frontend format
+        const mappedUsers = result.items.map((user) => ({
+          id: user.id,
+          email: user.email,
+          name: user.email,
+          role: user.role,
+          status: user.isFirstLogin ? "NEW" : "ACTIVE",
+          statusColor: user.isFirstLogin ? "#008282" : "#006d73",
+          isFirstLogin: user.isFirstLogin,
+        }));
+
+        setUsersData(mappedUsers);
+        setTotalUsers(result.total || 0);
+        setTotalPages(result.pages || 1);
+      }
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      setError(err.message || "Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch users from backend
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const result = await requestJson(`/auth/users?page=${currentPage}&pageSize=${PAGE_SIZE}`);
-        
-        if (result && result.items) {
-          // Map backend data to frontend format
-          const mappedUsers = result.items.map((user) => ({
-            id: user.id,
-            name: user.email,
-            role: user.role,
-            status: user.isFirstLogin ? "NEW" : "ACTIVE",
-            statusColor: user.isFirstLogin ? "#008282" : "#006d73",
-          }));
-
-          setUsersData(mappedUsers);
-          setTotalUsers(result.total || 0);
-          setTotalPages(result.pages || 1);
-        }
-      } catch (err) {
-        console.error("Error fetching users:", err);
-        setError(err.message || "Failed to load users");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
+    fetchUsers(currentPage);
   }, [currentPage]);
 
   // Handle nav changes
@@ -75,6 +82,7 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
         alert("User created successfully!");
         setIsCreateUserModalOpen(false);
         // Refresh the users list
+        await fetchUsers(1);
         setCurrentPage(1);
       }
     } catch (err) {
@@ -87,9 +95,62 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
     setIsCreateUserModalOpen(false);
   };
 
-  const handleUserAction = (userId) => {
-    // TODO: Implement action menu or edit user functionality
-    console.log("Action for user:", userId);
+  const handleUserAction = (userRow) => {
+    setEditingUser(userRow);
+    setIsEditUserModalOpen(true);
+  };
+
+  const handleEditUserSubmit = async (formData) => {
+    try {
+      const result = await requestJson(`/auth/users/${editingUser.id}`, {
+        method: "PUT",
+        body: JSON.stringify(formData),
+      });
+
+      if (result && result.id) {
+        alert("User updated successfully!");
+        setIsEditUserModalOpen(false);
+        setEditingUser(null);
+        // Refresh the users list
+        await fetchUsers(1);
+        setCurrentPage(1);
+      }
+    } catch (err) {
+      alert(err.message || "Failed to update user");
+      return Promise.reject(err);
+    }
+  };
+
+  const handleCancelEditUser = () => {
+    setIsEditUserModalOpen(false);
+    setEditingUser(null);
+  };
+
+  const handleDeleteUser = (userRow) => {
+    setUserToDelete(userRow);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteUserConfirm = async () => {
+    try {
+      await requestJson(`/auth/users/${userToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      alert("User deleted successfully!");
+      setIsDeleteConfirmOpen(false);
+      setUserToDelete(null);
+      // Refresh the users list
+      await fetchUsers(1);
+      setCurrentPage(1);
+    } catch (err) {
+      alert(err.message || "Failed to delete user");
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteConfirmOpen(false);
+    setUserToDelete(null);
   };
 
   const handlePrevPage = () => {
@@ -157,7 +218,7 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
                     <th className="table-header-cell cell-name">EMAIL</th>
                     <th className="table-header-cell cell-role">ROLE</th>
                     <th className="table-header-cell cell-status">STATUS</th>
-                    <th className="table-header-cell cell-action"></th>
+                    <th className="table-header-cell cell-action">ACTION</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -188,13 +249,21 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
                           </div>
                         </td>
                         <td className="table-cell cell-action">
-                          <button
-                            className="action-button"
-                            onClick={() => handleUserAction(userRow.id)}
-                            title="More options"
+                          <span
+                            className="action-link"
+                            onClick={() => handleUserAction(userRow)}
+                            title="Edit user"
                           >
-                            ⋮
-                          </button>
+                            Edit
+                          </span>
+                          <span className="action-separator">|</span>
+                          <span
+                            className="action-link action-link-delete"
+                            onClick={() => handleDeleteUser(userRow)}
+                            title="Delete user"
+                          >
+                            Delete
+                          </span>
                         </td>
                       </tr>
                     ))
@@ -251,6 +320,84 @@ function AdminUsersPage({ user, onNavChange, onLogout }) {
             onSubmit={handleCreateUserSubmit}
             onCancel={handleCancelCreateUser}
           />
+        </Modal>
+
+        {/* Edit User Modal */}
+        <Modal
+          isOpen={isEditUserModalOpen}
+          title="Edit User"
+          onClose={handleCancelEditUser}
+          size="small"
+        >
+          <CreateUserForm
+            initialData={editingUser}
+            onSubmit={handleEditUserSubmit}
+            onCancel={handleCancelEditUser}
+          />
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          isOpen={isDeleteConfirmOpen}
+          title="Confirm Delete"
+          onClose={handleCancelDelete}
+          size="small"
+        >
+          <div style={{ padding: "16px 0" }}>
+            <p style={{ marginBottom: "12px", color: "#64748b" }}>
+              Are you sure you want to delete user <strong>{userToDelete?.email}</strong>?
+            </p>
+            <div
+              style={{
+                padding: "12px",
+                marginBottom: "16px",
+                backgroundColor: "#fef2f2",
+                borderLeft: "4px solid #dc2626",
+                borderRadius: "4px",
+              }}
+            >
+              <p style={{ margin: "0", color: "#dc2626", fontSize: "14px" }}>
+                ⚠️ This action cannot be undone. The user will be permanently deleted.
+              </p>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "12px",
+              }}
+            >
+              <button
+                onClick={handleCancelDelete}
+                style={{
+                  padding: "10px 24px",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "4px",
+                  background: "transparent",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUserConfirm}
+                style={{
+                  padding: "10px 24px",
+                  border: "none",
+                  borderRadius: "4px",
+                  background: "#dc2626",
+                  color: "white",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </Modal>
       </div>
     </AppLayout>

@@ -48,6 +48,14 @@ function DashboardPage({ user, onLogout }) {
     }
   });
 
+  // State for API data
+  const [totalLocations, setTotalLocations] = useState(0);
+  const [totalAssets, setTotalAssets] = useState(0);
+  const [totalEvaluations, setTotalEvaluations] = useState(0);
+  const [recentEvaluationsData, setRecentEvaluationsData] = useState([]);
+  const [assetListData, setAssetListData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   // Save navigation state to localStorage whenever it changes
   useEffect(() => {
     try {
@@ -56,6 +64,118 @@ function DashboardPage({ user, onLogout }) {
       // Ignore storage failures
     }
   }, [activeNav]);
+
+  // Fetch asset and evaluation data from API
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Use correct auth token key from authSession
+        const token = localStorage.getItem("assetguard:auth-token");
+        console.log("Token from localStorage:", token);
+        
+        if (!token) {
+          console.warn("No token found in localStorage. Using keys:", Object.keys(localStorage));
+          return;
+        }
+
+        const headers = {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        };
+
+        console.log("Request headers:", headers);
+
+        // Fetch locations to create id -> name mapping
+        const locationsResponse = await fetch("/api/v1/locations/", { headers });
+        let locationMap = {};
+        if (locationsResponse.ok) {
+          const locationsData = await locationsResponse.json();
+          console.log("Locations full response:", locationsData);
+          console.log("Locations data:", locationsData.data);
+          console.log("Is array:", Array.isArray(locationsData.data));
+          const locations = locationsData.data || [];
+          console.log("Locations length:", locations.length);
+          setTotalLocations(locations.length);
+          locationMap = locations.reduce((map, loc) => {
+            map[loc.id] = loc.name;
+            return map;
+          }, {});
+          console.log("Location map:", locationMap);
+        } else {
+          console.error("Locations response not ok:", locationsResponse.status);
+        }
+
+        // Fetch total assets
+        const assetsResponse = await fetch(
+          "/api/v1/assets/all?pageSize=20",
+          { headers }
+        );
+        console.log("Assets response status:", assetsResponse.status);
+        if (assetsResponse.ok) {
+          const assetsData = await assetsResponse.json();
+          console.log("Assets response:", assetsData);
+          const total = assetsData.data?.total || assetsData.total || 0;
+          setTotalAssets(total);
+
+          // Format asset list data for display
+          const items = assetsData.data?.items || [];
+          const formattedAssets = items.slice(0, 4).map((item) => [
+            item.name || "N/A",
+            locationMap[item.locationId] || "N/A"
+          ]);
+          setAssetListData(formattedAssets);
+        } else {
+          const errorData = await assetsResponse.json();
+          console.error("Assets error response:", errorData);
+        }
+
+        // Fetch total evaluations and recent evaluations data
+        const evaluationsResponse = await fetch(
+          "/api/v1/evaluations/history?pageSize=20",
+          { headers }
+        );
+        console.log("Evaluations response status:", evaluationsResponse.status);
+        if (evaluationsResponse.ok) {
+          const evaluationsData = await evaluationsResponse.json();
+          console.log("Evaluations response:", evaluationsData);
+          const total = evaluationsData.data?.total || evaluationsData.total || 0;
+          setTotalEvaluations(total);
+
+          // Format recent evaluations data
+          const items = evaluationsData.data?.items || [];
+          const formattedEvaluations = items.slice(0, 3).map((item) => {
+            // Format time with date - convert ISO 8601 to "May 6, 2026, 10:49 PM" format
+            const date = new Date(item.evaluatedAt);
+            const dateTimeStr = date.toLocaleString("en-US", { 
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "2-digit", 
+              minute: "2-digit",
+              hour12: true 
+            });
+            
+            return [
+              item.assetName || "N/A",
+              item.equipment || "N/A",
+              item.status || "N/A",
+              dateTimeStr
+            ];
+          });
+          setRecentEvaluationsData(formattedEvaluations);
+        } else {
+          const errorData = await evaluationsResponse.json();
+          console.error("Evaluations error response:", errorData);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   // For Contractors, only allow Evaluation page
   const isContractor = user?.role === "Contractors";
@@ -132,37 +252,40 @@ function DashboardPage({ user, onLogout }) {
 
   return (
     <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user} onLogout={onLogout}>
-      <DashboardHeader />
+      <DashboardHeader onNavigate={setActiveNav} />
 
       <section className="stats-grid">
         <StatCard
+          label="TOTAL LOCATIONS"
+          value={totalLocations.toLocaleString()}
+          description="Shared infrastructure locations across your organization."
+        />
+        <StatCard
           label="TOTAL ASSETS"
-          value="1,428"
-          meta="+12%"
+          value={totalAssets.toLocaleString()}
           description="Verified infrastructure components across all regions."
         />
         <StatCard
           label="TOTAL EVALUATIONS"
-          value="8,942"
-          meta="98.4% Accuracy"
+          value={totalEvaluations.toLocaleString()}
           description="Real-time safety and performance audits completed."
         />
       </section>
 
       <section className="dashboard-section">
-        <SectionHeader title="Recent Evaluations" action="VIEW HISTORY" />
+        <SectionHeader title="Recent Evaluations" action="VIEW HISTORY" onAction={() => setActiveNav("History")} />
         <DataTable
           columns={["ASSET", "EQUIPMENT", "RESULT", "TIME"]}
-          rows={recentEvaluations}
+          rows={recentEvaluationsData.length > 0 ? recentEvaluationsData : recentEvaluations}
           resultColumnIndex={2}
         />
       </section>
 
       <section className="dashboard-section">
-        <SectionHeader title="Asset List" action="MANAGE ALL" />
+        <SectionHeader title="Asset List" action="MANAGE ALL" onAction={() => setActiveNav("Assets")} />
         <DataTable
-          columns={["ASSET", "ORGANISATION", "MAX LOAD", "UPDATE TIME"]}
-          rows={assetList}
+          columns={["ASSET", "LOCATION"]}
+          rows={assetListData.length > 0 ? assetListData : assetList}
         />
       </section>
     </AppLayout>

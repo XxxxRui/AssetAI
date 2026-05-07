@@ -7,6 +7,11 @@ function HistoryPage({ user, onNavChange, onLogout }) {
   const [activeNav, setActiveNav] = useState("History");
   const [currentPage, setCurrentPage] = useState(1);
   
+  // Filter state
+  const [statusFilter, setStatusFilter] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  
   // Backend data state
   const [evaluationData, setEvaluationData] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -40,6 +45,17 @@ function HistoryPage({ user, onNavChange, onLogout }) {
         const params = new URLSearchParams();
         params.append("page", currentPage.toString());
         params.append("pageSize", "10");
+        
+        // Add filter parameters
+        if (statusFilter) {
+          params.append("status", statusFilter);
+        }
+        if (startDate) {
+          params.append("startDate", startDate);
+        }
+        if (endDate) {
+          params.append("endDate", endDate);
+        }
 
         const response = await fetch(
           `http://127.0.0.1:5000/api/v1/evaluations/history?${params}`,
@@ -73,10 +89,37 @@ function HistoryPage({ user, onNavChange, onLogout }) {
     };
 
     fetchEvaluationHistory();
-  }, [currentPage]);
+  }, [currentPage, statusFilter, startDate, endDate]);
 
   const handleNewEvaluation = () => {
     handleNavChange("Evaluation");
+  };
+
+  const handleFilterChange = () => {
+    // Reset to first page when filters change
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (e) => {
+    setStatusFilter(e.target.value);
+    handleFilterChange();
+  };
+
+  const handleStartDateChange = (e) => {
+    setStartDate(e.target.value);
+    handleFilterChange();
+  };
+
+  const handleEndDateChange = (e) => {
+    setEndDate(e.target.value);
+    handleFilterChange();
+  };
+
+  const handleResetFilters = () => {
+    setStatusFilter("");
+    setStartDate("");
+    setEndDate("");
+    setCurrentPage(1);
   };
 
   const handleAction = (evaluationId) => {
@@ -120,6 +163,48 @@ function HistoryPage({ user, onNavChange, onLogout }) {
           <button className="btn-new-evaluation" onClick={handleNewEvaluation}>
             <span className="btn-icon">+</span>
             <span>New Evaluation</span>
+          </button>
+        </div>
+
+        {/* Filter Bar */}
+        <div className="history-filter-row history-filter-row-flex">
+          <div className="history-filter-fields">
+            <label className="history-field">
+              <span className="history-label">STATUS</span>
+              <select
+                value={statusFilter}
+                onChange={handleStatusChange}
+              >
+                <option value="">All Status</option>
+                <option value="Compliant">Compliant</option>
+                <option value="Non-Compliant">Non-Compliant</option>
+              </select>
+            </label>
+
+            <label className="history-field">
+              <span className="history-label">START DATE</span>
+              <input
+                type="date"
+                value={startDate}
+                onChange={handleStartDateChange}
+              />
+            </label>
+
+            <label className="history-field">
+              <span className="history-label">END DATE</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={handleEndDateChange}
+              />
+            </label>
+          </div>
+          <button
+            className="history-filter-clear-link"
+            onClick={handleResetFilters}
+            title="Reset all filters"
+          >
+            Clear Filters
           </button>
         </div>
 
@@ -170,7 +255,6 @@ function HistoryPage({ user, onNavChange, onLogout }) {
                   <th className="table-header-cell table-cell-overload">OVERLOAD %</th>
                   <th className="table-header-cell table-cell-remark">REMARK</th>
                   <th className="table-header-cell table-cell-time">EVALUATED AT</th>
-                  <th className="table-header-cell table-cell-action">ACTION</th>
                 </tr>
               </thead>
               <tbody>
@@ -219,15 +303,6 @@ function HistoryPage({ user, onNavChange, onLogout }) {
                       </td>
                       <td className="table-cell table-cell-time">
                         <span className="time-text">{formatDate(evaluation.evaluatedAt)}</span>
-                      </td>
-                      <td className="table-cell table-cell-action">
-                        <button
-                          className="action-btn"
-                          onClick={() => handleAction(evaluation.id)}
-                          title="More options"
-                        >
-                          ⋮
-                        </button>
                       </td>
                     </tr>
                   );

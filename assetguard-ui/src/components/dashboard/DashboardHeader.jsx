@@ -1,4 +1,4 @@
-function DashboardHeader() {
+function DashboardHeader({ onNavigate }) {
     return (
       <section className="dashboard-header">
         <div>
@@ -9,7 +9,7 @@ function DashboardHeader() {
           </p>
         </div>
   
-        <button type="button" className="new-evaluation-btn">
+        <button type="button" className="new-evaluation-btn" onClick={() => onNavigate && onNavigate("Evaluation")}>
           + New Evaluation
         </button>
       </section>

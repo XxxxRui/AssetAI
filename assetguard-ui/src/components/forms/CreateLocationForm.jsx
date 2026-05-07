@@ -1,12 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../../styles/create-asset-form.css";
 
-function CreateLocationForm({ onSubmit, onCancel }) {
+function CreateLocationForm({ onSubmit, onCancel, initialData = null }) {
+  const isEditMode = !!initialData;
+  
   const [formData, setFormData] = useState({
-    name: "",
+    name: initialData?.name || "",
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || "",
+      });
+    }
+  }, [initialData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -96,7 +106,7 @@ function CreateLocationForm({ onSubmit, onCancel }) {
           className="btn-primary"
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Creating..." : "Create Location"}
+          {isSubmitting ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update Location" : "Create Location")}
         </button>
       </div>
     </form>
