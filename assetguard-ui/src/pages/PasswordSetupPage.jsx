@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AuthLayout from "../components/layout/AuthLayout";
+import buildingImage from "../assets/building.png";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
@@ -48,44 +49,42 @@ function PasswordSetupPage({ token, onPasswordSetSuccess, onBackToLogin }) {
   };
 
   const leftContent = (
-    <div className="setup-left-content">
+    <div className="login-hero">
       <div className="hero-brand">
         <span className="hero-brand-icon">&#9670;</span>
         AssetGuard AI
       </div>
 
-      <div className="setup-copy">
-        <p className="hero-subtitle">SECURITY PROTOCOL</p>
+      <div className="hero-image-wrapper">
+        <img src={buildingImage} alt="Engineering infrastructure" className="hero-image" />
+        <div className="hero-image-overlay" />
+      </div>
 
-        <h1>Initialize your secure gateway.</h1>
-
-        <p className="hero-description" style={{ color: "rgba(255,255,255,0.5)", maxWidth: 520 }}>
-          First-time authentication requires a robust password to anchor your
-          account&apos;s cryptographic identity within the AssetGuard network.
+      <div className="hero-text">
+        <p className="hero-subtitle">INTELLIGENT ASSET MANAGEMENT</p>
+        <h1>
+          Precision engineering
+          <br />
+          meets AI insight.
+        </h1>
+        <p className="hero-description">
+          Advanced oversight for complex infrastructure environments —
+          delivered through clarity and intelligent automation.
         </p>
+      </div>
 
-        <div className="feature-list">
-          <div className="feature-item">
-            <span className="feature-dot"></span>
-            <div>
-              <strong>End-to-End Encryption</strong>
-              <p>
-                Passwords are hashed locally before transmission to ensure
-                zero-knowledge architecture.
-              </p>
-            </div>
-          </div>
-
-          <div className="feature-item">
-            <span className="feature-dot"></span>
-            <div>
-              <strong>Multi-Layer Validation</strong>
-              <p>
-                Real-time entropy analysis checks for common patterns and
-                dictionary vulnerabilities.
-              </p>
-            </div>
-          </div>
+      <div className="hero-tags">
+        <div className="hero-tag">
+          <span className="hero-tag-dot" />
+          REAL-TIME MONITORING
+        </div>
+        <div className="hero-tag">
+          <span className="hero-tag-dot" />
+          AI-DRIVEN ANALYSIS
+        </div>
+        <div className="hero-tag">
+          <span className="hero-tag-dot" />
+          COMPLIANCE ASSURED
         </div>
       </div>
     </div>
@@ -117,17 +116,6 @@ function PasswordSetupPage({ token, onPasswordSetSuccess, onBackToLogin }) {
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
           </div>
-        </div>
-
-        <div className="requirements-box">
-          <p className="requirements-title">REQUIREMENTS</p>
-
-          <ul>
-            <li className="active">Minimum 12 characters</li>
-            <li>Uppercase & lowercase letters</li>
-            <li>Numbers & special symbols</li>
-            <li>No personal information</li>
-          </ul>
         </div>
 
         {errorMessage && (
@@ -162,14 +150,6 @@ function PasswordSetupPage({ token, onPasswordSetSuccess, onBackToLogin }) {
         >
           Back to Login
         </button>
-      </div>
-
-      <div className="tip-card">
-        <div className="tip-title">AI Security Tip</div>
-        <p>
-          Our GuardNet engine suggests using a unique passphrase of four
-          unrelated words for optimal cryptographic strength.
-        </p>
       </div>
     </div>
   );
