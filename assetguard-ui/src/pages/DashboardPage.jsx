@@ -48,6 +48,11 @@ function DashboardPage({ user, onLogout }) {
     }
   });
 
+  // State for API data
+  const [totalAssets, setTotalAssets] = useState(0);
+  const [totalEvaluations, setTotalEvaluations] = useState(0);
+  const [loading, setLoading] = useState(true);
+
   // Save navigation state to localStorage whenever it changes
   useEffect(() => {
     try {
@@ -56,6 +61,67 @@ function DashboardPage({ user, onLogout }) {
       // Ignore storage failures
     }
   }, [activeNav]);
+
+  // Fetch asset and evaluation data from API
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Use correct auth token key from authSession
+        const token = localStorage.getItem("assetguard:auth-token");
+        console.log("Token from localStorage:", token);
+        
+        if (!token) {
+          console.warn("No token found in localStorage. Using keys:", Object.keys(localStorage));
+          return;
+        }
+
+        const headers = {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        };
+
+        console.log("Request headers:", headers);
+
+        // Fetch total assets
+        const assetsResponse = await fetch(
+          "/api/v1/assets/all?pageSize=1",
+          { headers }
+        );
+        console.log("Assets response status:", assetsResponse.status);
+        if (assetsResponse.ok) {
+          const assetsData = await assetsResponse.json();
+          console.log("Assets response:", assetsData);
+          const total = assetsData.data?.total || assetsData.total || 0;
+          setTotalAssets(total);
+        } else {
+          const errorData = await assetsResponse.json();
+          console.error("Assets error response:", errorData);
+        }
+
+        // Fetch total evaluations
+        const evaluationsResponse = await fetch(
+          "/api/v1/evaluations/history?pageSize=1",
+          { headers }
+        );
+        console.log("Evaluations response status:", evaluationsResponse.status);
+        if (evaluationsResponse.ok) {
+          const evaluationsData = await evaluationsResponse.json();
+          console.log("Evaluations response:", evaluationsData);
+          const total = evaluationsData.data?.total || evaluationsData.total || 0;
+          setTotalEvaluations(total);
+        } else {
+          const errorData = await evaluationsResponse.json();
+          console.error("Evaluations error response:", errorData);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   // For Contractors, only allow Evaluation page
   const isContractor = user?.role === "Contractors";
@@ -137,14 +203,12 @@ function DashboardPage({ user, onLogout }) {
       <section className="stats-grid">
         <StatCard
           label="TOTAL ASSETS"
-          value="1,428"
-          meta="+12%"
+          value={totalAssets.toLocaleString()}
           description="Verified infrastructure components across all regions."
         />
         <StatCard
           label="TOTAL EVALUATIONS"
-          value="8,942"
-          meta="98.4% Accuracy"
+          value={totalEvaluations.toLocaleString()}
           description="Real-time safety and performance audits completed."
         />
       </section>
