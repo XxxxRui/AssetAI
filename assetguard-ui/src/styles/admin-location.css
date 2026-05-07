@@ -106,6 +106,38 @@
   color: var(--color-brand);
   background: var(--color-bg-hover);
 }
+.action-link {
+  color: transparent;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  transition: color var(--transition-fast);
+  user-select: none;
+}
+.table-body-row:hover .action-link {
+  color: var(--color-brand);
+}
+.action-link:hover {
+  color: var(--color-brand-dark);
+}
+.action-separator {
+  color: transparent;
+  margin: 0 8px;
+  transition: color var(--transition-fast);
+}
+.table-body-row:hover .action-separator {
+  color: #cbd5e1;
+}
+.action-link-delete {
+  color: transparent;
+}
+.table-body-row:hover .action-link-delete {
+  color: #dc2626;
+}
+.action-link-delete:hover {
+  color: #b91c1c;
+}
 .pagination-container {
   display: flex;
   justify-content: space-between;
