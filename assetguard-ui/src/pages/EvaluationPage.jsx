@@ -570,7 +570,7 @@ function EvaluationPage({ user, onNavChange, onLogout }) {
                       alert("Sending email alert...");
                     }}
                   >
-                    🔔 Send Email Alert
+                  Send Email Alert
                   </button>
                 )}
                 <button 
