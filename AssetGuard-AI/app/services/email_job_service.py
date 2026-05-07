@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 
 from flask import current_app
 
+from sqlalchemy.exc import SQLAlchemyError
 from app.extensions import db
 from app.models import EmailJob
 from app.services.evaluation_service import EvaluationService
@@ -19,8 +19,17 @@ class EmailJobService:
     def create_job(*, evaluation_id: int, requester_email: str) -> dict:
         job_id = str(uuid.uuid4())
         job = EmailJob(id=job_id, evaluation_id=evaluation_id, status="processing")
-        db.session.add(job)
-        db.session.commit()
+        try:
+            db.session.add(job)
+            db.session.commit()
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            raise ApiError(
+                "Email job storage is unavailable. Please run database migrations.",
+                503,
+                code="email_job_storage_unavailable",
+                details={"reason": str(exc)},
+            ) from exc
 
         async_enabled = current_app.config.get("EMAIL_ASYNC_ENABLED", True)
         if async_enabled:
@@ -54,8 +63,11 @@ class EmailJobService:
         except Exception as exc:
             job.status = "failed"
             job.error = str(exc)
-        db.session.add(job)
-        db.session.commit()
+        try:
+            db.session.add(job)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
 
     @staticmethod
     def get_job(job_id: str) -> dict:
