@@ -198,7 +198,7 @@ function DashboardPage({ user, onLogout }) {
 
   return (
     <AppLayout activeNav={activeNav} onNavChange={setActiveNav} user={user} onLogout={onLogout}>
-      <DashboardHeader />
+      <DashboardHeader onNavigate={setActiveNav} />
 
       <section className="stats-grid">
         <StatCard
