@@ -49,6 +49,7 @@ function DashboardPage({ user, onLogout }) {
   });
 
   // State for API data
+  const [totalLocations, setTotalLocations] = useState(0);
   const [totalAssets, setTotalAssets] = useState(0);
   const [totalEvaluations, setTotalEvaluations] = useState(0);
   const [recentEvaluationsData, setRecentEvaluationsData] = useState([]);
@@ -89,12 +90,19 @@ function DashboardPage({ user, onLogout }) {
         let locationMap = {};
         if (locationsResponse.ok) {
           const locationsData = await locationsResponse.json();
-          console.log("Locations response:", locationsData);
+          console.log("Locations full response:", locationsData);
+          console.log("Locations data:", locationsData.data);
+          console.log("Is array:", Array.isArray(locationsData.data));
           const locations = locationsData.data || [];
+          console.log("Locations length:", locations.length);
+          setTotalLocations(locations.length);
           locationMap = locations.reduce((map, loc) => {
             map[loc.id] = loc.name;
             return map;
           }, {});
+          console.log("Location map:", locationMap);
+        } else {
+          console.error("Locations response not ok:", locationsResponse.status);
         }
 
         // Fetch total assets
@@ -248,6 +256,11 @@ function DashboardPage({ user, onLogout }) {
 
       <section className="stats-grid">
         <StatCard
+          label="TOTAL LOCATIONS"
+          value={totalLocations.toLocaleString()}
+          description="Shared infrastructure locations across your organization."
+        />
+        <StatCard
           label="TOTAL ASSETS"
           value={totalAssets.toLocaleString()}
           description="Verified infrastructure components across all regions."
@@ -260,7 +273,7 @@ function DashboardPage({ user, onLogout }) {
       </section>
 
       <section className="dashboard-section">
-        <SectionHeader title="Recent Evaluations" action="VIEW HISTORY" />
+        <SectionHeader title="Recent Evaluations" action="VIEW HISTORY" onAction={() => setActiveNav("History")} />
         <DataTable
           columns={["ASSET", "EQUIPMENT", "RESULT", "TIME"]}
           rows={recentEvaluationsData.length > 0 ? recentEvaluationsData : recentEvaluations}
@@ -269,7 +282,7 @@ function DashboardPage({ user, onLogout }) {
       </section>
 
       <section className="dashboard-section">
-        <SectionHeader title="Asset List" action="MANAGE ALL" />
+        <SectionHeader title="Asset List" action="MANAGE ALL" onAction={() => setActiveNav("Assets")} />
         <DataTable
           columns={["ASSET", "LOCATION"]}
           rows={assetListData.length > 0 ? assetListData : assetList}
