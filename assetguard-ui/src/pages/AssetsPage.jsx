@@ -580,23 +580,12 @@ function AssetsPage({ user, onNavChange, onLogout }) {
         </div>
 
         {/* Location Selector & Search */}
-        <div className="filter-search-row">
-          <div className="location-selector-area">
-            <label htmlFor="location-select" style={{ fontSize: "14px", fontWeight: "600", marginRight: "12px" }}>
-              Select Location:
-            </label>
+        <div className="assets-filter-row assets-filter-row-wide">
+          <label className="assets-field">
+            <span className="assets-label">LOCATION</span>
             <select
-              id="location-select"
               value={selectedLocationId || ""}
               onChange={(e) => setSelectedLocationId(parseInt(e.target.value))}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "4px",
-                border: "1px solid #bdc9c8",
-                backgroundColor: "#ffffff",
-                fontSize: "14px",
-                cursor: "pointer",
-              }}
             >
               {locations.map((loc) => (
                 <option key={loc.id} value={loc.id}>
@@ -604,20 +593,17 @@ function AssetsPage({ user, onNavChange, onLogout }) {
                 </option>
               ))}
             </select>
-          </div>
+          </label>
 
-          <div className="search-filter-area">
-            <div className="search-input-wrapper">
-              <span className="search-icon">🔍</span>
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Filter by asset name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
+          <label className="assets-field assets-field-search">
+            <span className="assets-label">SEARCH</span>
+            <input
+              type="text"
+              placeholder="Filter by asset name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </label>
         </div>
 
         {/* Success Message */}
