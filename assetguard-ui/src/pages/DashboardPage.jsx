@@ -52,6 +52,7 @@ function DashboardPage({ user, onLogout }) {
   const [totalAssets, setTotalAssets] = useState(0);
   const [totalEvaluations, setTotalEvaluations] = useState(0);
   const [recentEvaluationsData, setRecentEvaluationsData] = useState([]);
+  const [assetListData, setAssetListData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Save navigation state to localStorage whenever it changes
@@ -83,9 +84,22 @@ function DashboardPage({ user, onLogout }) {
 
         console.log("Request headers:", headers);
 
+        // Fetch locations to create id -> name mapping
+        const locationsResponse = await fetch("/api/v1/locations/", { headers });
+        let locationMap = {};
+        if (locationsResponse.ok) {
+          const locationsData = await locationsResponse.json();
+          console.log("Locations response:", locationsData);
+          const locations = locationsData.data || [];
+          locationMap = locations.reduce((map, loc) => {
+            map[loc.id] = loc.name;
+            return map;
+          }, {});
+        }
+
         // Fetch total assets
         const assetsResponse = await fetch(
-          "/api/v1/assets/all?pageSize=1",
+          "/api/v1/assets/all?pageSize=20",
           { headers }
         );
         console.log("Assets response status:", assetsResponse.status);
@@ -94,6 +108,14 @@ function DashboardPage({ user, onLogout }) {
           console.log("Assets response:", assetsData);
           const total = assetsData.data?.total || assetsData.total || 0;
           setTotalAssets(total);
+
+          // Format asset list data for display
+          const items = assetsData.data?.items || [];
+          const formattedAssets = items.slice(0, 4).map((item) => [
+            item.name || "N/A",
+            locationMap[item.locationId] || "N/A"
+          ]);
+          setAssetListData(formattedAssets);
         } else {
           const errorData = await assetsResponse.json();
           console.error("Assets error response:", errorData);
@@ -249,8 +271,8 @@ function DashboardPage({ user, onLogout }) {
       <section className="dashboard-section">
         <SectionHeader title="Asset List" action="MANAGE ALL" />
         <DataTable
-          columns={["ASSET", "ORGANISATION", "MAX LOAD", "UPDATE TIME"]}
-          rows={assetList}
+          columns={["ASSET", "LOCATION"]}
+          rows={assetListData.length > 0 ? assetListData : assetList}
         />
       </section>
     </AppLayout>
