@@ -122,6 +122,7 @@ class EvaluationService:
         page: int,
         page_size: int,
         asset_id: int | None = None,
+        user_id: int | None = None,
         equipment: str | None = None,
         status: str | None = None,
         from_date: date | None = None,
@@ -131,6 +132,8 @@ class EvaluationService:
 
         if asset_id is not None:
             stmt = stmt.where(EvaluationLog.asset_id == asset_id)
+        if user_id is not None:
+            stmt = stmt.where(EvaluationLog.user_id == user_id)
         if equipment is not None:
             stmt = stmt.where(EvaluationLog.equipment == equipment)
         if status is not None:

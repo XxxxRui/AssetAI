@@ -115,6 +115,34 @@ def history():
     return ok(data)
 
 
+@evaluations_bp.get("/history/user/<int:user_id>")
+@require_roles(UserRole.SYSTEM_ADMIN.value, UserRole.ASSET_MANAGER.value)
+def history_by_user(user_id: int):
+    _ = get_auth_context()
+    page = int(request.args.get("page", 1))
+    page_size = int(request.args.get("pageSize", 20))
+    if page < 1 or page_size < 1 or page_size > 200:
+        raise ApiError("Invalid pagination parameters", 400, code="validation_error")
+
+    asset_id = request.args.get("assetId", type=int)
+    equipment = request.args.get("equipment")
+    status = request.args.get("status")
+    from_date = _parse_optional_date(request.args.get("fromDate"))
+    to_date = _parse_optional_date(request.args.get("toDate"))
+
+    data = EvaluationService.history(
+        page=page,
+        page_size=page_size,
+        asset_id=asset_id,
+        user_id=user_id,
+        equipment=equipment,
+        status=status,
+        from_date=from_date,
+        to_date=to_date,
+    )
+    return ok(data)
+
+
 @evaluations_bp.get("/dashboard-summary")
 @require_roles(UserRole.SYSTEM_ADMIN.value, UserRole.ASSET_MANAGER.value)
 def dashboard_summary():
