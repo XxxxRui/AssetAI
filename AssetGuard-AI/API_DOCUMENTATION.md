@@ -52,11 +52,11 @@ Authorization: Bearer <token>
 
 ## Roles & Permissions
 
-| Role | Description |
-|------|-------------|
-| `System_Admin` | Full access, including user management and AI import |
-| `Asset_Manager` | Can create and manage assets and load capacities |
-| `Contractors` | Read-only access; can run load evaluations |
+| Role            | Description                                          |
+| --------------- | ---------------------------------------------------- |
+| `System_Admin`  | Full access, including user management and AI import |
+| `Asset_Manager` | Can create and manage assets and load capacities     |
+| `Contractors`   | Read-only access; can run load evaluations           |
 
 ---
 
@@ -97,16 +97,16 @@ Some error responses include an additional `details` field with more context.
 
 ## HTTP Status Codes
 
-| Code | Meaning |
-|------|---------|
-| `200 OK` | Successful read or operation without new resource creation |
-| `201 Created` | Successful creation that produced a new record |
-| `400 Bad Request` | Validation error or business rule violation |
-| `401 Unauthorized` | Missing or invalid credentials |
-| `403 Forbidden` | Insufficient role permissions |
-| `404 Not Found` | Resource does not exist |
-| `409 Conflict` | Duplicate resource violation |
-| `500 Internal Server Error` | Unexpected server failure |
+| Code                        | Meaning                                                    |
+| --------------------------- | ---------------------------------------------------------- |
+| `200 OK`                    | Successful read or operation without new resource creation |
+| `201 Created`               | Successful creation that produced a new record             |
+| `400 Bad Request`           | Validation error or business rule violation                |
+| `401 Unauthorized`          | Missing or invalid credentials                             |
+| `403 Forbidden`             | Insufficient role permissions                              |
+| `404 Not Found`             | Resource does not exist                                    |
+| `409 Conflict`              | Duplicate resource violation                               |
+| `500 Internal Server Error` | Unexpected server failure                                  |
 
 ---
 
@@ -116,12 +116,12 @@ Some error responses include an additional `details` field with more context.
 
 Each capacity name is bound to exactly one allowed metric (enforced at creation and update).
 
-| `name` | Required `metric` |
-|--------|-------------------|
-| `max point load` | `kN` |
-| `max axle load` | `t` |
-| `max uniform distributor load` | `kPa` |
-| `max displacement size` | `t` |
+| `name`                         | Required `metric` |
+| ------------------------------ | ----------------- |
+| `max point load`               | `kN`              |
+| `max axle load`                | `t`               |
+| `max uniform distributor load` | `kPa`             |
+| `max displacement size`        | `t`               |
 
 ### Load Metrics
 
@@ -139,14 +139,14 @@ Each capacity name is bound to exactly one allowed metric (enforced at creation 
 
 Equipment types are mapped internally to the relevant load capacity.
 
-| `equipment` | Load Parameter Label | Metric | Matched Capacity Name |
-|-------------|----------------------|--------|-----------------------|
-| `Crane with outriggers` | Max Outrigger Load | `kN` | `max point load` |
-| `Mobile crane` | Max Axle Load | `t` | `max axle load` |
-| `Heavy vehicle` | Max Axle Load | `t` | `max axle load` |
-| `Elevated Work Platform` | Max Wheel Load | `kN` | `max point load` |
-| `Storage Load` | Uniform Distributor Load | `kPa` | `max uniform distributor load` |
-| `Vessel` | Displacement | `t` | `max displacement size` |
+| `equipment`              | Load Parameter Label     | Metric | Matched Capacity Name          |
+| ------------------------ | ------------------------ | ------ | ------------------------------ |
+| `Crane with outriggers`  | Max Outrigger Load       | `kN`   | `max point load`               |
+| `Mobile crane`           | Max Axle Load            | `t`    | `max axle load`                |
+| `Heavy vehicle`          | Max Axle Load            | `t`    | `max axle load`                |
+| `Elevated Work Platform` | Max Wheel Load           | `kN`   | `max point load`               |
+| `Storage Load`           | Uniform Distributor Load | `kPa`  | `max uniform distributor load` |
+| `Vessel`                 | Displacement             | `t`    | `max displacement size`        |
 
 ### Timestamp Format
 
@@ -210,10 +210,10 @@ When `isFirstLogin` is `true`, the client should redirect the user to the initia
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | `email` or `password` is missing |
-| `401` | `invalid_credentials` | Email not found or password incorrect |
+| Status | Code                  | Description                           |
+| ------ | --------------------- | ------------------------------------- |
+| `400`  | `validation_error`    | `email` or `password` is missing      |
+| `401`  | `invalid_credentials` | Email not found or password incorrect |
 
 ---
 
@@ -244,11 +244,11 @@ Set a personal password on the user's first login and clear the `isFirstLogin` f
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | `newPassword` is missing or blank |
-| `400` | `not_first_login` | `isFirstLogin` is already `false`; use `/auth/change-password` instead |
-| `401` | `missing_token` | No Bearer token provided |
+| Status | Code               | Description                                                            |
+| ------ | ------------------ | ---------------------------------------------------------------------- |
+| `400`  | `validation_error` | `newPassword` is missing or blank                                      |
+| `400`  | `not_first_login`  | `isFirstLogin` is already `false`; use `/auth/change-password` instead |
+| `401`  | `missing_token`    | No Bearer token provided                                               |
 
 ---
 
@@ -280,11 +280,11 @@ Change the password of the currently authenticated user.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | `currentPassword` or `newPassword` is missing, blank, or new equals current |
-| `401` | `missing_token` | No Bearer token provided |
-| `401` | `invalid_credentials` | `currentPassword` does not match the user's actual password |
+| Status | Code                  | Description                                                                 |
+| ------ | --------------------- | --------------------------------------------------------------------------- |
+| `400`  | `validation_error`    | `currentPassword` or `newPassword` is missing, blank, or new equals current |
+| `401`  | `missing_token`       | No Bearer token provided                                                    |
+| `401`  | `invalid_credentials` | `currentPassword` does not match the user's actual password                 |
 
 ---
 
@@ -322,11 +322,11 @@ Create a new user account.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | Required field missing or role value is invalid |
-| `403` | — | Caller is not `System_Admin` |
-| `409` | `email_exists` | Email address already registered |
+| Status | Code               | Description                                     |
+| ------ | ------------------ | ----------------------------------------------- |
+| `400`  | `validation_error` | Required field missing or role value is invalid |
+| `403`  | —                  | Caller is not `System_Admin`                    |
+| `409`  | `email_exists`     | Email address already registered                |
 
 ---
 
@@ -338,10 +338,10 @@ List all users with pagination.
 
 **Query parameters:**
 
-| Parameter | Type | Required | Default | Notes |
-|-----------|------|----------|---------|-------|
-| `page` | integer | No | `1` | Must be ≥ 1 |
-| `pageSize` | integer | No | `20` | Must be 1–200 |
+| Parameter  | Type    | Required | Default | Notes         |
+| ---------- | ------- | -------- | ------- | ------------- |
+| `page`     | integer | No       | `1`     | Must be ≥ 1   |
+| `pageSize` | integer | No       | `20`    | Must be 1–200 |
 
 **Response `200`:**
 
@@ -369,10 +369,10 @@ List all users with pagination.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | Pagination parameters out of range |
-| `403` | — | Caller is not `System_Admin` |
+| Status | Code               | Description                        |
+| ------ | ------------------ | ---------------------------------- |
+| `400`  | `validation_error` | Pagination parameters out of range |
+| `403`  | —                  | Caller is not `System_Admin`       |
 
 ---
 
@@ -412,12 +412,12 @@ At least one of `email`, `role`, or `password` must be present. When `password` 
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | No updatable field provided, or role value is invalid |
-| `403` | — | Caller is not `System_Admin` |
-| `404` | `user_not_found` | No user with the given ID |
-| `409` | `email_exists` | Email address already registered |
+| Status | Code               | Description                                           |
+| ------ | ------------------ | ----------------------------------------------------- |
+| `400`  | `validation_error` | No updatable field provided, or role value is invalid |
+| `403`  | —                  | Caller is not `System_Admin`                          |
+| `404`  | `user_not_found`   | No user with the given ID                             |
+| `409`  | `email_exists`     | Email address already registered                      |
 
 ---
 
@@ -440,11 +440,11 @@ Delete a user account. The caller cannot delete their own account.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `cannot_delete_self` | Attempted to delete the authenticated user's own account |
-| `403` | — | Caller is not `System_Admin` |
-| `404` | `user_not_found` | No user with the given ID |
+| Status | Code                 | Description                                              |
+| ------ | -------------------- | -------------------------------------------------------- |
+| `400`  | `cannot_delete_self` | Attempted to delete the authenticated user's own account |
+| `403`  | —                    | Caller is not `System_Admin`                             |
+| `404`  | `user_not_found`     | No user with the given ID                                |
 
 ---
 
@@ -510,11 +510,11 @@ Create a new location.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | `name` is missing or blank |
-| `403` | — | Caller lacks permission |
-| `409` | `location_exists` | Location name already exists |
+| Status | Code               | Description                  |
+| ------ | ------------------ | ---------------------------- |
+| `400`  | `validation_error` | `name` is missing or blank   |
+| `403`  | —                  | Caller lacks permission      |
+| `409`  | `location_exists`  | Location name already exists |
 
 ---
 
@@ -548,12 +548,12 @@ Rename an existing location.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | `name` is missing or blank |
-| `403` | — | Caller lacks permission |
-| `404` | `location_not_found` | Location does not exist |
-| `409` | `location_exists` | Another location already has this name |
+| Status | Code                 | Description                            |
+| ------ | -------------------- | -------------------------------------- |
+| `400`  | `validation_error`   | `name` is missing or blank             |
+| `403`  | —                    | Caller lacks permission                |
+| `404`  | `location_not_found` | Location does not exist                |
+| `409`  | `location_exists`    | Another location already has this name |
 
 ---
 
@@ -576,11 +576,11 @@ Delete a location. Fails if assets still reference it.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `403` | — | Caller lacks permission |
-| `404` | `location_not_found` | Location does not exist |
-| `409` | `location_has_assets` | Cannot delete — assets still reference this location |
+| Status | Code                  | Description                                          |
+| ------ | --------------------- | ---------------------------------------------------- |
+| `403`  | —                     | Caller lacks permission                              |
+| `404`  | `location_not_found`  | Location does not exist                              |
+| `409`  | `location_has_assets` | Cannot delete — assets still reference this location |
 
 ---
 
@@ -594,12 +594,12 @@ List assets for a specific location, including their load capacities.
 
 **Query parameters:**
 
-| Parameter | Type | Required | Default | Notes |
-|-----------|------|----------|---------|-------|
-| `locationId` | integer | Yes | — | |
-| `page` | integer | No | `1` | Must be ≥ 1 |
-| `pageSize` | integer | No | `20` | Must be 1–200 |
-| `q` | string | No | — | Case-insensitive substring filter on asset name |
+| Parameter    | Type    | Required | Default | Notes                                           |
+| ------------ | ------- | -------- | ------- | ----------------------------------------------- |
+| `locationId` | integer | Yes      | —       |                                                 |
+| `page`       | integer | No       | `1`     | Must be ≥ 1                                     |
+| `pageSize`   | integer | No       | `20`    | Must be 1–200                                   |
+| `q`          | string  | No       | —       | Case-insensitive substring filter on asset name |
 
 **Response `200`:**
 
@@ -637,10 +637,10 @@ List assets for a specific location, including their load capacities.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | `locationId` missing or pagination parameters out of range |
-| `404` | `location_not_found` | No location with the given ID |
+| Status | Code                 | Description                                                |
+| ------ | -------------------- | ---------------------------------------------------------- |
+| `400`  | `validation_error`   | `locationId` missing or pagination parameters out of range |
+| `404`  | `location_not_found` | No location with the given ID                              |
 
 ---
 
@@ -652,11 +652,11 @@ List all assets across all locations (without load capacities).
 
 **Query parameters:**
 
-| Parameter | Type | Required | Default | Notes |
-|-----------|------|----------|---------|-------|
-| `page` | integer | No | `1` | Must be ≥ 1 |
-| `pageSize` | integer | No | `20` | Must be 1–200 |
-| `q` | string | No | — | Case-insensitive substring filter on asset name |
+| Parameter  | Type    | Required | Default | Notes                                           |
+| ---------- | ------- | -------- | ------- | ----------------------------------------------- |
+| `page`     | integer | No       | `1`     | Must be ≥ 1                                     |
+| `pageSize` | integer | No       | `20`    | Must be 1–200                                   |
+| `q`        | string  | No       | —       | Case-insensitive substring filter on asset name |
 
 **Response `200`:**
 
@@ -683,9 +683,9 @@ List all assets across all locations (without load capacities).
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | Pagination parameters out of range |
+| Status | Code               | Description                        |
+| ------ | ------------------ | ---------------------------------- |
+| `400`  | `validation_error` | Pagination parameters out of range |
 
 ---
 
@@ -768,15 +768,15 @@ Each `loadCapacities[].name` is bound to a single allowed metric. Providing a mi
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | Required field missing or `maxLoad` is not a positive number |
-| `400` | `invalid_metric` | Metric value outside the allowed enum |
-| `400` | `invalid_capacity_name` | Capacity name outside the allowed enum |
-| `400` | `invalid_capacity_metric_pair` | Metric does not match the required metric for the capacity name |
-| `403` | — | Caller lacks permission |
-| `409` | `asset_already_exists` | Asset with same name already exists at the resolved location |
-| `409` | `duplicate_capacity` | Same capacity name appears more than once in `loadCapacities` |
+| Status | Code                           | Description                                                     |
+| ------ | ------------------------------ | --------------------------------------------------------------- |
+| `400`  | `validation_error`             | Required field missing or `maxLoad` is not a positive number    |
+| `400`  | `invalid_metric`               | Metric value outside the allowed enum                           |
+| `400`  | `invalid_capacity_name`        | Capacity name outside the allowed enum                          |
+| `400`  | `invalid_capacity_metric_pair` | Metric does not match the required metric for the capacity name |
+| `403`  | —                              | Caller lacks permission                                         |
+| `409`  | `asset_already_exists`         | Asset with same name already exists at the resolved location    |
+| `409`  | `duplicate_capacity`           | Same capacity name appears more than once in `loadCapacities`   |
 
 ---
 
@@ -825,12 +825,12 @@ At least one of `name` or `locationName` must be present. When `locationName` is
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | No updatable field provided or name is blank |
-| `403` | — | Caller lacks permission |
-| `404` | `asset_not_found` | No asset with the given ID |
-| `409` | `asset_already_exists` | Asset with the same name already exists at the resolved location |
+| Status | Code                   | Description                                                      |
+| ------ | ---------------------- | ---------------------------------------------------------------- |
+| `400`  | `validation_error`     | No updatable field provided or name is blank                     |
+| `403`  | —                      | Caller lacks permission                                          |
+| `404`  | `asset_not_found`      | No asset with the given ID                                       |
+| `409`  | `asset_already_exists` | Asset with the same name already exists at the resolved location |
 
 ---
 
@@ -853,10 +853,10 @@ Delete an asset and all its associated load capacities and evaluation logs.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `403` | — | Caller lacks permission |
-| `404` | `asset_not_found` | No asset with the given ID |
+| Status | Code              | Description                |
+| ------ | ----------------- | -------------------------- |
+| `403`  | —                 | Caller lacks permission    |
+| `404`  | `asset_not_found` | No asset with the given ID |
 
 ---
 
@@ -896,10 +896,10 @@ List all load capacities for a single asset.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `403` | — | Caller lacks permission |
-| `404` | `asset_not_found` | No asset with the given ID |
+| Status | Code              | Description                |
+| ------ | ----------------- | -------------------------- |
+| `403`  | —                 | Caller lacks permission    |
+| `404`  | `asset_not_found` | No asset with the given ID |
 
 ---
 
@@ -948,15 +948,15 @@ Add a new load capacity row to an existing asset.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | Required field missing or `maxLoad` is not a positive number |
-| `400` | `invalid_metric` | Metric value outside the allowed enum |
-| `400` | `invalid_capacity_name` | Capacity name outside the allowed enum |
-| `400` | `invalid_capacity_metric_pair` | Metric does not match the required metric for the capacity name |
-| `403` | — | Caller lacks permission |
-| `404` | `asset_not_found` | No asset with the given ID |
-| `409` | `duplicate_capacity` | This capacity name already exists on the asset |
+| Status | Code                           | Description                                                     |
+| ------ | ------------------------------ | --------------------------------------------------------------- |
+| `400`  | `validation_error`             | Required field missing or `maxLoad` is not a positive number    |
+| `400`  | `invalid_metric`               | Metric value outside the allowed enum                           |
+| `400`  | `invalid_capacity_name`        | Capacity name outside the allowed enum                          |
+| `400`  | `invalid_capacity_metric_pair` | Metric does not match the required metric for the capacity name |
+| `403`  | —                              | Caller lacks permission                                         |
+| `404`  | `asset_not_found`              | No asset with the given ID                                      |
+| `409`  | `duplicate_capacity`           | This capacity name already exists on the asset                  |
 
 ---
 
@@ -1005,14 +1005,14 @@ At least one of `name`, `metric`, `maxLoad`, or `details` must be present in the
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | No updatable field provided, or `maxLoad` is not a positive number |
-| `400` | `invalid_metric` | Metric value outside the allowed enum |
-| `400` | `invalid_capacity_name` | Capacity name outside the allowed enum |
-| `403` | — | Caller lacks permission |
-| `404` | `asset_not_found` | No asset with the given ID |
-| `404` | `capacity_not_found` | No load capacity with the given ID on this asset |
+| Status | Code                    | Description                                                        |
+| ------ | ----------------------- | ------------------------------------------------------------------ |
+| `400`  | `validation_error`      | No updatable field provided, or `maxLoad` is not a positive number |
+| `400`  | `invalid_metric`        | Metric value outside the allowed enum                              |
+| `400`  | `invalid_capacity_name` | Capacity name outside the allowed enum                             |
+| `403`  | —                       | Caller lacks permission                                            |
+| `404`  | `asset_not_found`       | No asset with the given ID                                         |
+| `404`  | `capacity_not_found`    | No load capacity with the given ID on this asset                   |
 
 ---
 
@@ -1035,11 +1035,11 @@ Remove a load capacity row from an asset.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `403` | — | Caller lacks permission |
-| `404` | `asset_not_found` | No asset with the given ID |
-| `404` | `capacity_not_found` | No load capacity with the given ID on this asset |
+| Status | Code                 | Description                                      |
+| ------ | -------------------- | ------------------------------------------------ |
+| `403`  | —                    | Caller lacks permission                          |
+| `404`  | `asset_not_found`    | No asset with the given ID                       |
+| `404`  | `capacity_not_found` | No load capacity with the given ID on this asset |
 
 ---
 
@@ -1112,14 +1112,14 @@ Evaluate whether a proposed load complies with the selected asset's stored capac
 }
 ```
 
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `locationId` | integer | Yes | Must match the asset's location |
-| `assetId` | integer | Yes | |
-| `equipment` | string | Yes | Must be a valid equipment type (see [Equipment Types](#equipment-types)) |
-| `loadParameterValue` | number | Yes | Must be > 0 |
-| `equipmentModel` | string | No | Free-text model/identifier |
-| `remark` | string | No | Free-text note saved with the log entry |
+| Field                | Type    | Required | Notes                                                                    |
+| -------------------- | ------- | -------- | ------------------------------------------------------------------------ |
+| `locationId`         | integer | Yes      | Must match the asset's location                                          |
+| `assetId`            | integer | Yes      |                                                                          |
+| `equipment`          | string  | Yes      | Must be a valid equipment type (see [Equipment Types](#equipment-types)) |
+| `loadParameterValue` | number  | Yes      | Must be > 0                                                              |
+| `equipmentModel`     | string  | No       | Free-text model/identifier                                               |
+| `remark`             | string  | No       | Free-text note saved with the log entry                                  |
 
 **Evaluation logic:**
 
@@ -1156,30 +1156,30 @@ The service maps the `equipment` string to the required capacity name and metric
 
 **Response fields:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `asset` | object | Asset summary (without timestamps) |
-| `equipment` | string | Equipment type used |
-| `equipmentModel` | string \| null | Equipment model/identifier |
-| `loadParameterValue` | number | Submitted load value |
-| `loadParameterMetric` | string | Metric derived from equipment type |
-| `matchedCapacityName` | string | The capacity name that was checked |
-| `capacityMaxLoad` | number | The stored maximum load |
-| `status` | string | `"Compliant"` or `"Non-Compliant"` |
-| `overloadPercentage` | number | Raw decimal: `0.0` when compliant; ratio of excess over max load otherwise (e.g. `0.25` = 25%) |
-| `remark` | string \| null | Remark as saved |
+| Field                 | Type           | Description                                                                                    |
+| --------------------- | -------------- | ---------------------------------------------------------------------------------------------- |
+| `asset`               | object         | Asset summary (without timestamps)                                                             |
+| `equipment`           | string         | Equipment type used                                                                            |
+| `equipmentModel`      | string \| null | Equipment model/identifier                                                                     |
+| `loadParameterValue`  | number         | Submitted load value                                                                           |
+| `loadParameterMetric` | string         | Metric derived from equipment type                                                             |
+| `matchedCapacityName` | string         | The capacity name that was checked                                                             |
+| `capacityMaxLoad`     | number         | The stored maximum load                                                                        |
+| `status`              | string         | `"Compliant"` or `"Non-Compliant"`                                                             |
+| `overloadPercentage`  | number         | Raw decimal: `0.0` when compliant; ratio of excess over max load otherwise (e.g. `0.25` = 25%) |
+| `remark`              | string \| null | Remark as saved                                                                                |
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | Required field missing or value is not a valid number |
-| `400` | `invalid_load_value` | `loadParameterValue` is zero or negative |
-| `400` | `invalid_equipment` | `equipment` is not one of the supported types |
-| `400` | `asset_location_mismatch` | The asset does not belong to the supplied `locationId` |
-| `400` | `capacity_not_found` | The asset has no capacity row for the equipment's required capacity name |
-| `400` | `capacity_metric_mismatch` | Stored capacity metric does not match the equipment's expected metric |
-| `404` | `asset_not_found` | No asset with the given ID |
+| Status | Code                       | Description                                                              |
+| ------ | -------------------------- | ------------------------------------------------------------------------ |
+| `400`  | `validation_error`         | Required field missing or value is not a valid number                    |
+| `400`  | `invalid_load_value`       | `loadParameterValue` is zero or negative                                 |
+| `400`  | `invalid_equipment`        | `equipment` is not one of the supported types                            |
+| `400`  | `asset_location_mismatch`  | The asset does not belong to the supplied `locationId`                   |
+| `400`  | `capacity_not_found`       | The asset has no capacity row for the equipment's required capacity name |
+| `400`  | `capacity_metric_mismatch` | Stored capacity metric does not match the equipment's expected metric    |
+| `404`  | `asset_not_found`          | No asset with the given ID                                               |
 
 ---
 
@@ -1191,15 +1191,15 @@ List all past evaluation log entries, most recent first.
 
 **Query parameters:**
 
-| Parameter | Type | Required | Default | Notes |
-|-----------|------|----------|---------|-------|
-| `page` | integer | No | `1` | Must be ≥ 1 |
-| `pageSize` | integer | No | `20` | Must be 1–200 |
-| `assetId` | integer | No | — | Filter by asset ID |
-| `equipment` | string | No | — | Filter by exact equipment type name |
-| `status` | string | No | — | Filter by `"Compliant"` or `"Non-Compliant"` |
-| `fromDate` | string | No | — | Filter records on or after this date (format: `YYYY-MM-DD`) |
-| `toDate` | string | No | — | Filter records before this date (format: `YYYY-MM-DD`) |
+| Parameter   | Type    | Required | Default | Notes                                                       |
+| ----------- | ------- | -------- | ------- | ----------------------------------------------------------- |
+| `page`      | integer | No       | `1`     | Must be ≥ 1                                                 |
+| `pageSize`  | integer | No       | `20`    | Must be 1–200                                               |
+| `assetId`   | integer | No       | —       | Filter by asset ID                                          |
+| `equipment` | string  | No       | —       | Filter by exact equipment type name                         |
+| `status`    | string  | No       | —       | Filter by `"Compliant"` or `"Non-Compliant"`                |
+| `fromDate`  | string  | No       | —       | Filter records on or after this date (format: `YYYY-MM-DD`) |
+| `toDate`    | string  | No       | —       | Filter records before this date (format: `YYYY-MM-DD`)      |
 
 **Response `200`:**
 
@@ -1217,6 +1217,9 @@ List all past evaluation log entries, most recent first.
         "loadParameterValue": 500.0,
         "loadParameterMetric": "kN",
         "matchedCapacityName": "max point load",
+        "capacityMaxLoad": 1200.0,
+        "capacityMetric": "kN",
+        "capacityMaxLoadDisplay": "1200 kN / 500 kN",
         "status": "Compliant",
         "overloadPercentage": 0.0,
         "remark": "Pre-lift check",
@@ -1233,10 +1236,10 @@ List all past evaluation log entries, most recent first.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | Pagination parameters out of range, invalid date format, or invalid status value |
-| `403` | — | Caller is `Contractors` (insufficient permission) |
+| Status | Code               | Description                                                                      |
+| ------ | ------------------ | -------------------------------------------------------------------------------- |
+| `400`  | `validation_error` | Pagination parameters out of range, invalid date format, or invalid status value |
+| `403`  | —                  | Caller is `Contractors` (insufficient permission)                                |
 
 ---
 
@@ -1248,21 +1251,21 @@ List evaluation log entries for a specific user, most recent first. Supports the
 
 **Path parameters:**
 
-| Parameter | Type | Required | Notes |
-|-----------|------|----------|-------|
-| `user_id` | integer | Yes | ID of the user whose evaluation logs to retrieve |
+| Parameter | Type    | Required | Notes                                            |
+| --------- | ------- | -------- | ------------------------------------------------ |
+| `user_id` | integer | Yes      | ID of the user whose evaluation logs to retrieve |
 
 **Query parameters:**
 
-| Parameter | Type | Required | Default | Notes |
-|-----------|------|----------|---------|-------|
-| `page` | integer | No | `1` | Must be ≥ 1 |
-| `pageSize` | integer | No | `20` | Must be 1–200 |
-| `assetId` | integer | No | — | Filter by asset ID |
-| `equipment` | string | No | — | Filter by exact equipment type name |
-| `status` | string | No | — | Filter by `"Compliant"` or `"Non-Compliant"` |
-| `fromDate` | string | No | — | Filter records on or after this date (format: `YYYY-MM-DD`) |
-| `toDate` | string | No | — | Filter records before this date (format: `YYYY-MM-DD`) |
+| Parameter   | Type    | Required | Default | Notes                                                       |
+| ----------- | ------- | -------- | ------- | ----------------------------------------------------------- |
+| `page`      | integer | No       | `1`     | Must be ≥ 1                                                 |
+| `pageSize`  | integer | No       | `20`    | Must be 1–200                                               |
+| `assetId`   | integer | No       | —       | Filter by asset ID                                          |
+| `equipment` | string  | No       | —       | Filter by exact equipment type name                         |
+| `status`    | string  | No       | —       | Filter by `"Compliant"` or `"Non-Compliant"`                |
+| `fromDate`  | string  | No       | —       | Filter records on or after this date (format: `YYYY-MM-DD`) |
+| `toDate`    | string  | No       | —       | Filter records before this date (format: `YYYY-MM-DD`)      |
 
 **Response `200`:**
 
@@ -1280,6 +1283,9 @@ List evaluation log entries for a specific user, most recent first. Supports the
         "loadParameterValue": 500.0,
         "loadParameterMetric": "kN",
         "matchedCapacityName": "max point load",
+        "capacityMaxLoad": 1200.0,
+        "capacityMetric": "kN",
+        "capacityMaxLoadDisplay": "1200 kN / 500 kN",
         "status": "Compliant",
         "overloadPercentage": 0.0,
         "remark": "Pre-lift check",
@@ -1296,10 +1302,10 @@ List evaluation log entries for a specific user, most recent first. Supports the
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | Pagination parameters out of range, invalid date format, or invalid status value |
-| `403` | — | Caller is `Contractors` (insufficient permission) |
+| Status | Code               | Description                                                                      |
+| ------ | ------------------ | -------------------------------------------------------------------------------- |
+| `400`  | `validation_error` | Pagination parameters out of range, invalid date format, or invalid status value |
+| `403`  | —                  | Caller is `Contractors` (insufficient permission)                                |
 
 ---
 
@@ -1311,9 +1317,9 @@ Return aggregated evaluation statistics for the dashboard, including totals, ove
 
 **Query parameters:**
 
-| Parameter | Type | Required | Default | Notes |
-|-----------|------|----------|---------|-------|
-| `limit` | integer | No | `10` | Maximum 100. Controls `recentEvaluations` and `topAssets` count. |
+| Parameter | Type    | Required | Default | Notes                                                            |
+| --------- | ------- | -------- | ------- | ---------------------------------------------------------------- |
+| `limit`   | integer | No       | `10`    | Maximum 100. Controls `recentEvaluations` and `topAssets` count. |
 
 **Response `200`:**
 
@@ -1359,10 +1365,10 @@ Return aggregated evaluation statistics for the dashboard, including totals, ove
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | Invalid limit value |
-| `403` | — | Caller lacks permission |
+| Status | Code               | Description             |
+| ------ | ------------------ | ----------------------- |
+| `400`  | `validation_error` | Invalid limit value     |
+| `403`  | —                  | Caller lacks permission |
 
 ---
 
@@ -1376,9 +1382,9 @@ Return recent email delivery log entries.
 
 **Query parameters:**
 
-| Parameter | Type | Required | Default | Notes |
-|-----------|------|----------|---------|-------|
-| `limit` | integer | No | `100` | Maximum 500 |
+| Parameter | Type    | Required | Default | Notes       |
+| --------- | ------- | -------- | ------- | ----------- |
+| `limit`   | integer | No       | `100`   | Maximum 500 |
 
 **Response `200`:**
 
@@ -1403,9 +1409,9 @@ Return recent email delivery log entries.
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `403` | — | Caller lacks permission |
+| Status | Code | Description             |
+| ------ | ---- | ----------------------- |
+| `403`  | —    | Caller lacks permission |
 
 ---
 
@@ -1446,12 +1452,12 @@ Update email alert configuration. Partial update — only send the fields you wa
 }
 ```
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `escalationThresholdPercent` | integer | Overload threshold percentage |
-| `digestTimeUtc` | string | HH:MM format |
-| `recipientsCsv` | string | Comma-separated email addresses |
-| `sendOnNonCompliant` | boolean | Enable/disable auto-send on non-compliant results |
+| Field                        | Type    | Notes                                             |
+| ---------------------------- | ------- | ------------------------------------------------- |
+| `escalationThresholdPercent` | integer | Overload threshold percentage                     |
+| `digestTimeUtc`              | string  | HH:MM format                                      |
+| `recipientsCsv`              | string  | Comma-separated email addresses                   |
+| `sendOnNonCompliant`         | boolean | Enable/disable auto-send on non-compliant results |
 
 **Response `200`:** Same shape as `GET /alerts/email-preferences`.
 
@@ -1599,25 +1605,25 @@ If `directoryPath` is omitted, the server uses the value of `AI_JSON_UPLOADS_DIR
 
 **Rejection reasons in `rejected[]`:**
 
-| `reason` | Description |
-|----------|-------------|
-| `invalid_json` | File is not valid JSON |
-| `invalid_payload` | Top-level JSON is not an object |
-| `invalid_asset_payload` | Object is missing `locationName`, `name`, or `loadCapacities` |
-| `asset_already_exists` | Asset with the same name already exists at the resolved location |
-| `invalid_metric` | A metric value in the file is not in the allowed enum |
-| `invalid_capacity_name` | A capacity name in the file is not in the allowed enum |
-| `invalid_capacity_metric_pair` | Metric does not match the required metric for the capacity name |
-| `duplicate_capacity` | Same capacity name appears more than once in `loadCapacities` |
-| `validation_error` | Other validation failure (e.g. blank name, non-positive maxLoad) |
+| `reason`                       | Description                                                      |
+| ------------------------------ | ---------------------------------------------------------------- |
+| `invalid_json`                 | File is not valid JSON                                           |
+| `invalid_payload`              | Top-level JSON is not an object                                  |
+| `invalid_asset_payload`        | Object is missing `locationName`, `name`, or `loadCapacities`    |
+| `asset_already_exists`         | Asset with the same name already exists at the resolved location |
+| `invalid_metric`               | A metric value in the file is not in the allowed enum            |
+| `invalid_capacity_name`        | A capacity name in the file is not in the allowed enum           |
+| `invalid_capacity_metric_pair` | Metric does not match the required metric for the capacity name  |
+| `duplicate_capacity`           | Same capacity name appears more than once in `loadCapacities`    |
+| `validation_error`             | Other validation failure (e.g. blank name, non-positive maxLoad) |
 
 **Possible errors:**
 
-| Status | Code | Description |
-|--------|------|-------------|
-| `400` | `validation_error` | `directoryPath` is required but not provided and no default is configured |
-| `403` | — | Caller is not `System_Admin` |
-| `404` | `json_uploads_dir_not_found` | The specified directory does not exist |
+| Status | Code                         | Description                                                               |
+| ------ | ---------------------------- | ------------------------------------------------------------------------- |
+| `400`  | `validation_error`           | `directoryPath` is required but not provided and no default is configured |
+| `403`  | —                            | Caller is not `System_Admin`                                              |
+| `404`  | `json_uploads_dir_not_found` | The specified directory does not exist                                    |
 
 ---
 
@@ -1646,9 +1652,9 @@ Each imported JSON file must conform to this schema:
 
 ## Known Inconsistencies
 
-| Issue | Detail |
-|-------|--------|
-| **Login timestamp format** | `POST /auth/login` returns timestamps in UTC with microseconds (`.isoformat()`). All other endpoints strip microseconds and use local timezone (`_iso()`). |
-| **Missing `evaluatedAt` on check** | `POST /evaluations/check` stores `evaluated_at` in the database but does not return it in the response. Use `GET /evaluations/history` to get timestamps. |
-| **`overloadPercentage` scale** | `POST /evaluations/check` and `GET /evaluations/history` return raw decimal (e.g. `0.25`). `GET /evaluations/dashboard-summary` returns percentage already multiplied by 100 (e.g. `25.0`). |
-| **Locations not paginated** | `GET /locations/` returns a flat array without pagination. |
+| Issue                              | Detail                                                                                                                                                                                      |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Login timestamp format**         | `POST /auth/login` returns timestamps in UTC with microseconds (`.isoformat()`). All other endpoints strip microseconds and use local timezone (`_iso()`).                                  |
+| **Missing `evaluatedAt` on check** | `POST /evaluations/check` stores `evaluated_at` in the database but does not return it in the response. Use `GET /evaluations/history` to get timestamps.                                   |
+| **`overloadPercentage` scale**     | `POST /evaluations/check` and `GET /evaluations/history` return raw decimal (e.g. `0.25`). `GET /evaluations/dashboard-summary` returns percentage already multiplied by 100 (e.g. `25.0`). |
+| **Locations not paginated**        | `GET /locations/` returns a flat array without pagination.                                                                                                                                  |

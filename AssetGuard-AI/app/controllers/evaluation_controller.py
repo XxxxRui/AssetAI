@@ -89,9 +89,9 @@ def _parse_optional_date(value: str | None) -> date | None:
 
 
 @evaluations_bp.get("/history")
-@require_roles(UserRole.SYSTEM_ADMIN.value, UserRole.ASSET_MANAGER.value)
+@require_auth
 def history():
-    _ = get_auth_context()
+    auth_context = get_auth_context()
     page = int(request.args.get("page", 1))
     page_size = int(request.args.get("pageSize", 20))
     if page < 1 or page_size < 1 or page_size > 200:
@@ -103,10 +103,16 @@ def history():
     from_date = _parse_optional_date(request.args.get("fromDate"))
     to_date = _parse_optional_date(request.args.get("toDate"))
 
+    # Contractors can only view their own evaluation history
+    user_id = None
+    if auth_context.role == UserRole.CONTRACTORS.value:
+        user_id = auth_context.user_id
+
     data = EvaluationService.history(
         page=page,
         page_size=page_size,
         asset_id=asset_id,
+        user_id=user_id,
         equipment=equipment,
         status=status,
         from_date=from_date,

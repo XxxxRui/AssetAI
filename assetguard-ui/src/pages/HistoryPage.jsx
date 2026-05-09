@@ -144,6 +144,13 @@ function HistoryPage({ user, onNavChange, onLogout }) {
     });
   };
 
+  const formatNumber = (value) => {
+    return Number(value).toLocaleString("en-US", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
+  };
+
   return (
     <AppLayout
       activeNav={activeNav}
@@ -209,7 +216,8 @@ function HistoryPage({ user, onNavChange, onLogout }) {
         </div>
 
         {/* Evaluation History Table */}
-        <div className="history-table-container">
+        <div className="history-table-wrapper">
+          <div className="history-table-container">
           {error && (
             <div style={{
               padding: "12px 16px",
@@ -242,18 +250,18 @@ function HistoryPage({ user, onNavChange, onLogout }) {
             </div>
           )}
           {!loading && evaluationData.length > 0 && (
-            <div className="history-table-container">
-              <table className="history-table">
+            <table className="history-table">
               <thead>
                 <tr className="table-header-row">
                   <th className="table-header-cell table-cell-id">EVALUATION ID</th>
                   <th className="table-header-cell table-cell-asset">ASSET</th>
                   <th className="table-header-cell table-cell-equipment">EQUIPMENT</th>
-                  <th className="table-header-cell table-cell-load">LOAD PARAMETER</th>
                   <th className="table-header-cell table-cell-capacity">MATCHED CAPACITY</th>
+                  <th className="table-header-cell table-cell-load">MAX / PLANNED</th>
                   <th className="table-header-cell table-cell-result">RESULT</th>
-                  <th className="table-header-cell table-cell-overload">OVERLOAD %</th>
+                  <th className="table-header-cell table-cell-overload">OVER-CAP %</th>
                   <th className="table-header-cell table-cell-remark">REMARK</th>
+                  <th className="table-header-cell table-cell-evaluated-by">EVALUATED BY</th>
                   <th className="table-header-cell table-cell-time">EVALUATED AT</th>
                 </tr>
               </thead>
@@ -276,13 +284,13 @@ function HistoryPage({ user, onNavChange, onLogout }) {
                           <div className="equipment-model">{evaluation.equipmentModel}</div>
                         </div>
                       </td>
-                      <td className="table-cell table-cell-load">
-                        <div className="load-info">
-                          {evaluation.loadParameterValue} {evaluation.loadParameterMetric}
-                        </div>
-                      </td>
                       <td className="table-cell table-cell-capacity">
                         <div className="capacity-info">{evaluation.matchedCapacityName}</div>
+                      </td>
+                      <td className="table-cell table-cell-load">
+                        <div className="load-info">
+                          {evaluation.capacityMaxLoadDisplay || `${evaluation.loadParameterValue}${evaluation.loadParameterMetric} / —`}
+                        </div>
                       </td>
                       <td className="table-cell table-cell-result">
                         <span
@@ -296,10 +304,13 @@ function HistoryPage({ user, onNavChange, onLogout }) {
                         </span>
                       </td>
                       <td className="table-cell table-cell-overload">
-                        <span className="overload-value">{(evaluation.overloadPercentage * 100).toFixed(1)}%</span>
+                        <span className="overload-value">{formatNumber(evaluation.overloadPercentage * 100)}%</span>
                       </td>
                       <td className="table-cell table-cell-remark">
                         <span className="remark-text">{evaluation.remark || "—"}</span>
+                      </td>
+                      <td className="table-cell table-cell-evaluated-by">
+                        <span className="user-email">{evaluation.userEmail || "—"}</span>
                       </td>
                       <td className="table-cell table-cell-time">
                         <span className="time-text">{formatDate(evaluation.evaluatedAt)}</span>
@@ -309,8 +320,11 @@ function HistoryPage({ user, onNavChange, onLogout }) {
                 })}
               </tbody>
             </table>
+          )}
+          </div>
 
-            {/* Pagination */}
+          {/* Pagination */}
+          {!loading && evaluationData.length > 0 && (
             <div className="pagination-container">
               <div className="pagination-info">
                 <span>Showing {evaluationData.length} of {totalItems} evaluations</span>
@@ -332,7 +346,6 @@ function HistoryPage({ user, onNavChange, onLogout }) {
                   →
                 </button>
               </div>
-            </div>
             </div>
           )}
         </div>

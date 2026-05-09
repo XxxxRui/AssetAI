@@ -70,11 +70,11 @@
   table-layout: fixed;
 }
 .table-header-row {
-  background: var(--color-bg-hover);
+  background: var(--color-table-header-bg);
 }
 .table-header-cell {
   font-family: var(--font-body);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-weight: var(--font-semibold);
   letter-spacing: 0.12em;
   color: var(--color-text-tertiary);
@@ -87,6 +87,7 @@
 }
 .table-body-row:hover {
   background: var(--color-bg-hover);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 .table-cell {
   padding: var(--space-4) var(--space-6);

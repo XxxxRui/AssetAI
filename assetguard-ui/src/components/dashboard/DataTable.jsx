@@ -1,11 +1,13 @@
 function DataTable({ columns, rows, resultColumnIndex }) {
+    const colCount = columns.length;
+    
     return (
       <div className="table-card">
-        <table className="data-table">
+        <table className="data-table" data-columns={colCount}>
           <thead>
             <tr>
-              {columns.map((column) => (
-                <th key={column}>{column}</th>
+              {columns.map((column, colIndex) => (
+                <th key={column} className={`col-${colIndex}`}>{column}</th>
               ))}
             </tr>
           </thead>
@@ -17,7 +19,7 @@ function DataTable({ columns, rows, resultColumnIndex }) {
                   const isResult = cellIndex === resultColumnIndex;
   
                   return (
-                    <td key={cellIndex}>
+                    <td key={cellIndex} className={`col-${cellIndex}`}>
                       {isResult ? (
                         <span
                           className={`result-badge ${

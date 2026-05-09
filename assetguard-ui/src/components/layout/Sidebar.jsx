@@ -21,9 +21,9 @@ function Sidebar({ activeItem = "Dashboard", onSelectItem, user = null }) {
   // Only show Admin menu if user has System_Admin role
   const isAdmin = user?.role === "System_Admin";
   
-  // For Contractors, only show Evaluation page
+  // For Contractors, only show Evaluation and History pages
   const isContractor = user?.role === "Contractors";
-  const displayMenuItems = isContractor ? ["Evaluation"] : menuItems;
+  const displayMenuItems = isContractor ? ["Evaluation", "History"] : menuItems;
 
   const handleAdminClick = () => {
     setAdminExpanded(!adminExpanded);

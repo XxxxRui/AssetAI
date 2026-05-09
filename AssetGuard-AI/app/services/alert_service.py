@@ -99,8 +99,12 @@ class AlertService:
                     name=log.matched_capacity_name,
                 ).first()
             )
-            max_load = f"{int(capacity.max_load) if capacity else '-'}{log.load_parameter_metric if capacity else ''}"
-            planned = f"{int(log.load_parameter_value)}{log.load_parameter_metric}"
+            # Format with thousands separator
+            if capacity:
+                max_load = f"{int(capacity.max_load):,}{log.load_parameter_metric}"
+            else:
+                max_load = "-"
+            planned = f"{int(log.load_parameter_value):,}{log.load_parameter_metric}"
             normalized.append(
                 {
                     "id": f"EV-{log.id:04d}",

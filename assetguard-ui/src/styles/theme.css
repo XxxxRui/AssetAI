@@ -43,9 +43,10 @@
   --color-bg-base: #f5f4f2;
   --color-bg-raised: #fafaf9;
   --color-bg-card: #ffffff;
-  --color-bg-hover: #f1f5f9;
+  --color-bg-hover: #f8fafc;
   --color-bg-input: #ffffff;
   --color-bg-overlay: rgba(10, 22, 40, 0.65);
+  --color-table-header-bg: #f1f5f9;
 
   /* Text (matching form/text colors) */
   --color-text-primary: #0f172a;
@@ -80,7 +81,7 @@
   --color-info-bg: rgba(56, 189, 248, 0.06);
 
   /* Borders — matching login inputs/cards */
-  --color-border-subtle: #f1f5f9;
+  --color-border-subtle: #e2e8f0;
   --color-border-default: #e2e8f0;
   --color-border-strong: #cbd5e1;
   --color-border-accent: rgba(0, 109, 115, 0.3);
