@@ -254,6 +254,7 @@ function HistoryPage({ user, onNavChange, onLogout }) {
                   <th className="table-header-cell table-cell-result">RESULT</th>
                   <th className="table-header-cell table-cell-overload">OVERLOAD %</th>
                   <th className="table-header-cell table-cell-remark">REMARK</th>
+                  <th className="table-header-cell table-cell-evaluated-by">EVALUATED BY</th>
                   <th className="table-header-cell table-cell-time">EVALUATED AT</th>
                 </tr>
               </thead>
@@ -300,6 +301,9 @@ function HistoryPage({ user, onNavChange, onLogout }) {
                       </td>
                       <td className="table-cell table-cell-remark">
                         <span className="remark-text">{evaluation.remark || "—"}</span>
+                      </td>
+                      <td className="table-cell table-cell-evaluated-by">
+                        <span className="user-email">{evaluation.userEmail || "—"}</span>
                       </td>
                       <td className="table-cell table-cell-time">
                         <span className="time-text">{formatDate(evaluation.evaluatedAt)}</span>

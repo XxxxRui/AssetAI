@@ -121,6 +121,46 @@
   border-collapse: collapse;
   table-layout: fixed;
 }
+.history-table th:nth-child(1),
+.history-table td:nth-child(1) {
+  width: 120px;
+}
+.history-table th:nth-child(2),
+.history-table td:nth-child(2) {
+  width: 140px;
+}
+.history-table th:nth-child(3),
+.history-table td:nth-child(3) {
+  width: 140px;
+}
+.history-table th:nth-child(4),
+.history-table td:nth-child(4) {
+  width: 130px;
+}
+.history-table th:nth-child(5),
+.history-table td:nth-child(5) {
+  width: 130px;
+}
+.history-table th:nth-child(6),
+.history-table td:nth-child(6) {
+  width: 110px;
+}
+.history-table th:nth-child(7),
+.history-table td:nth-child(7) {
+  width: 100px;
+}
+.history-table th:nth-child(8),
+.history-table td:nth-child(8) {
+  width: 120px;
+}
+.history-table th:nth-child(9),
+.history-table td:nth-child(9) {
+  width: 160px;
+}
+.history-table th:nth-child(10),
+.history-table td:nth-child(10) {
+  width: 180px;
+}
 .table-header-row {
   background: var(--color-table-header-bg);
 }
@@ -177,6 +217,11 @@
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   color: var(--color-text-primary);
+}
+.user-email {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
 }
 .asset-info {
   padding: var(--space-5) var(--space-6);

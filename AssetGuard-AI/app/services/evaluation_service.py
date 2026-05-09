@@ -167,6 +167,8 @@ class EvaluationService:
                 "overloadPercentage": log.overload_percentage,
                 "remark": log.remark,
                 "evaluatedAt": _evaluated_at_iso(log.evaluated_at),
+                "userId": log.user_id,
+                "userEmail": log.user.email if log.user else None,
             }
             for log in pagination.items
         ]
