@@ -425,6 +425,7 @@
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .data-table thead {
@@ -439,6 +440,8 @@
   letter-spacing: 0.12em;
   color: var(--color-text-tertiary);
   font-weight: var(--font-semibold);
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .data-table td {
@@ -447,6 +450,24 @@
   font-size: var(--text-sm);
   color: var(--color-text-secondary);
   border-top: 1px solid var(--color-border-subtle);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Equal column width distribution */
+/* For 3-column tables (Asset List) */
+.data-table[data-columns="3"] .col-0,
+.data-table[data-columns="3"] .col-1,
+.data-table[data-columns="3"] .col-2 {
+  width: 33.33%;
+}
+
+/* For 4-column tables (Recent Evaluations) */
+.data-table[data-columns="4"] .col-0,
+.data-table[data-columns="4"] .col-1,
+.data-table[data-columns="4"] .col-2,
+.data-table[data-columns="4"] .col-3 {
+  width: 25%;
 }
 
 .data-table tbody tr {

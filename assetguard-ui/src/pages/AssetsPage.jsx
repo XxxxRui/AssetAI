@@ -222,29 +222,32 @@ function AssetsPage({ user, onNavChange, onLogout }) {
         if (results.createdCount > 0) {
           setSuccessMessage(`✅ Successfully imported ${results.createdCount} asset(s)!`);
           setTimeout(() => setSuccessMessage(""), 4000);
-        }
-        
-        // Refresh assets list
-        if (results.createdCount > 0 && selectedLocationId) {
+          
+          // Refresh assets list after import
+          // Always refresh the current location's assets
           try {
-            const refreshResponse = await fetch(
-              `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=10`,
-              {
-                method: "GET",
-                headers: {
-                  "Authorization": `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-            
-            if (refreshResponse.ok) {
-              const refreshResult = await refreshResponse.json();
-              if (refreshResult.success && refreshResult.data) {
-                const assetsList = refreshResult.data.items || [];
-                const totalCount = refreshResult.data.total || assetsList.length;
-                setAssetsData(assetsList);
-                setTotalAssets(totalCount);
+            if (selectedLocationId) {
+              const refreshResponse = await fetch(
+                `http://127.0.0.1:5000/api/v1/assets/?locationId=${selectedLocationId}&page=1&pageSize=10`,
+                {
+                  method: "GET",
+                  headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+              
+              if (refreshResponse.ok) {
+                const refreshResult = await refreshResponse.json();
+                if (refreshResult.success && refreshResult.data) {
+                  const assetsList = refreshResult.data.items || [];
+                  const totalCount = refreshResult.data.total || assetsList.length;
+                  setAssetsData(assetsList);
+                  setTotalAssets(totalCount);
+                  // Reset to first page after refresh
+                  setCurrentPage(1);
+                }
               }
             }
           } catch (refreshErr) {
@@ -535,6 +538,17 @@ function AssetsPage({ user, onNavChange, onLogout }) {
       .join(" ");
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const getMaxLoadDisplay = (asset) => {
     if (!asset.loadCapacities || asset.loadCapacities.length === 0) {
       return "No capacity data";
@@ -657,6 +671,7 @@ function AssetsPage({ user, onNavChange, onLogout }) {
                 <tr className="table-header-row">
                   <th className="table-header-cell table-cell-asset">ASSET NAME</th>
                   <th className="table-header-cell table-cell-max-load">MAX LOAD</th>
+                  <th className="table-header-cell table-cell-time">UPDATED TIME</th>
                   <th className="table-header-cell table-cell-actions">ACTIONS</th>
                 </tr>
               </thead>
@@ -673,6 +688,11 @@ function AssetsPage({ user, onNavChange, onLogout }) {
                       <td className="table-cell table-data-cell">
                         <span className="max-load">
                           {getMaxLoadDisplay(asset)}
+                        </span>
+                      </td>
+                      <td className="table-cell table-cell-time">
+                        <span className="time-text">
+                          {asset.updatedAt ? formatDate(asset.updatedAt) : "—"}
                         </span>
                       </td>
                       <td className="table-cell table-data-cell table-actions-cell">
@@ -1081,7 +1101,20 @@ function AssetsPage({ user, onNavChange, onLogout }) {
               </div>
             )}
           </div>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px", paddingTop: "16px", borderTop: "1px solid #e2e8f0" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginTop: "20px", paddingTop: "16px", borderTop: "1px solid #e2e8f0" }}>
+            <button
+              className="btn-secondary"
+              onClick={() => {
+                // Close modal and refresh current location
+                setImportResult(null);
+                if (selectedLocationId) {
+                  fetchAssets(selectedLocationId, 1);
+                }
+              }}
+              style={{ margin: 0 }}
+            >
+              View in Current Location
+            </button>
             <button
               className="btn-primary"
               onClick={() => setImportResult(null)}

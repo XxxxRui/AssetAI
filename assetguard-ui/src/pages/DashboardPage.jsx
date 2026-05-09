@@ -20,10 +20,11 @@ const recentEvaluations = [
 ];
 
 const assetList = [
-  ["North Wing HVAC", "Global Logistics Hub", "450 kN", "Just now"],
-  ["Pressure Tank 09", "Arcturus Energy", "2,100 PSI", "2h ago"],
-  ["Solar Array Matrix", "GreenPulse Systems", "1.2 MW", "6h ago"],
-  ["Data Center Rack A1-12", "CloudHorizon", "32 kW", "Yesterday"],
+  ["North Wing HVAC", "Global Logistics Hub", "Just now"],
+  ["Pressure Tank 09", "Arcturus Energy", "2h ago"],
+  ["Solar Array Matrix", "GreenPulse Systems", "6h ago"],
+  ["Data Center Rack A1-12", "CloudHorizon", "Yesterday"],
+  ["Bridge12", "Berth 4", "2 days ago"],
 ];
 
 const navDescriptions = {
@@ -119,10 +120,23 @@ function DashboardPage({ user, onLogout }) {
 
           // Format asset list data for display
           const items = assetsData.data?.items || [];
-          const formattedAssets = items.slice(0, 4).map((item) => [
-            item.name || "N/A",
-            locationMap[item.locationId] || "N/A"
-          ]);
+          const formattedAssets = items.slice(0, 5).map((item) => {
+            // Format time - convert ISO 8601 to "May 6, 2026, 10:49 AM" format
+            const date = new Date(item.updatedAt);
+            const dateTimeStr = date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            
+            return [
+              item.name || "N/A",
+              locationMap[item.locationId] || "N/A",
+              dateTimeStr
+            ];
+          });
           setAssetListData(formattedAssets);
         } else {
           const errorData = await assetsResponse.json();
@@ -143,7 +157,7 @@ function DashboardPage({ user, onLogout }) {
 
           // Format recent evaluations data
           const items = evaluationsData.data?.items || [];
-          const formattedEvaluations = items.slice(0, 3).map((item) => {
+          const formattedEvaluations = items.slice(0, 5).map((item) => {
             // Format time with date - convert ISO 8601 to "May 6, 2026, 10:49 PM" format
             const date = new Date(item.evaluatedAt);
             const dateTimeStr = date.toLocaleString("en-US", { 
@@ -284,7 +298,7 @@ function DashboardPage({ user, onLogout }) {
       <section className="dashboard-section">
         <SectionHeader title="Asset List" action="MANAGE ALL" onAction={() => setActiveNav("Assets")} />
         <DataTable
-          columns={["ASSET", "LOCATION"]}
+          columns={["ASSET", "LOCATION", "UPDATED TIME"]}
           rows={assetListData.length > 0 ? assetListData : assetList}
         />
       </section>
