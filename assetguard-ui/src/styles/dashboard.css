@@ -432,7 +432,7 @@
 }
 
 .data-table thead {
-  background: var(--color-bg-hover);
+  background: var(--color-table-header-bg);
 }
 
 .data-table th {
