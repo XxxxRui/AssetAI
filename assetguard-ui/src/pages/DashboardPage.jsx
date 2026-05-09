@@ -177,9 +177,9 @@ function DashboardPage({ user, onLogout }) {
     fetchDashboardData();
   }, []);
 
-  // For Contractors, only allow Evaluation page
+  // For Contractors, only allow Evaluation and History pages
   const isContractor = user?.role === "Contractors";
-  if (isContractor && activeNav !== "Evaluation") {
+  if (isContractor && activeNav !== "Evaluation" && activeNav !== "History") {
     // Redirect contractors to Evaluation page
     setTimeout(() => setActiveNav("Evaluation"), 0);
     return <EvaluationPage user={user} onNavChange={setActiveNav} onLogout={onLogout} />;
