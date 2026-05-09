@@ -655,11 +655,9 @@ function AssetsPage({ user, onNavChange, onLogout }) {
             <table className="assets-table">
               <thead>
                 <tr className="table-header-row">
-                  <th className="table-header-cell table-cell-asset">Asset Name</th>
-                  <th className="table-header-cell table-cell-max-load">Max Load</th>
-                  <th className="table-header-cell table-cell-actions">
-                    Actions
-                  </th>
+                  <th className="table-header-cell table-cell-asset">ASSET NAME</th>
+                  <th className="table-header-cell table-cell-max-load">MAX LOAD</th>
+                  <th className="table-header-cell table-cell-actions">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>

@@ -153,8 +153,23 @@ class EvaluationService:
 
         stmt = stmt.order_by(EvaluationLog.evaluated_at.desc(), EvaluationLog.id.desc())
         pagination = db.paginate(stmt, page=page, per_page=page_size, error_out=False)
-        items = [
-            {
+        items = []
+        for log in pagination.items:
+            # Query the LoadCapacity to get the max_load value
+            capacity = (
+                LoadCapacity.query.filter_by(
+                    asset_id=log.asset_id,
+                    name=log.matched_capacity_name,
+                ).first()
+            )
+            # Format with thousands separator
+            if capacity:
+                capacity_max_load = f"{int(capacity.max_load):,}{log.load_parameter_metric}"
+            else:
+                capacity_max_load = "-"
+            load_planned = f"{int(log.load_parameter_value):,}{log.load_parameter_metric}"
+            
+            items.append({
                 "id": log.id,
                 "assetId": log.asset_id,
                 "assetName": log.asset.name if log.asset else None,
@@ -163,15 +178,16 @@ class EvaluationService:
                 "loadParameterValue": log.load_parameter_value,
                 "loadParameterMetric": log.load_parameter_metric,
                 "matchedCapacityName": log.matched_capacity_name,
+                "capacityMaxLoad": capacity.max_load if capacity else None,
+                "capacityMetric": log.load_parameter_metric,
+                "capacityMaxLoadDisplay": f"{capacity_max_load} / {load_planned}",
                 "status": log.status.value,
                 "overloadPercentage": log.overload_percentage,
                 "remark": log.remark,
                 "evaluatedAt": _evaluated_at_iso(log.evaluated_at),
                 "userId": log.user_id,
                 "userEmail": log.user.email if log.user else None,
-            }
-            for log in pagination.items
-        ]
+            })
         return {
             "items": items,
             "page": pagination.page,

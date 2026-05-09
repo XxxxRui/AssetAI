@@ -256,10 +256,10 @@ function HistoryPage({ user, onNavChange, onLogout }) {
                   <th className="table-header-cell table-cell-id">EVALUATION ID</th>
                   <th className="table-header-cell table-cell-asset">ASSET</th>
                   <th className="table-header-cell table-cell-equipment">EQUIPMENT</th>
-                  <th className="table-header-cell table-cell-load">LOAD PARAMETER</th>
                   <th className="table-header-cell table-cell-capacity">MATCHED CAPACITY</th>
+                  <th className="table-header-cell table-cell-load">MAX / PLANNED</th>
                   <th className="table-header-cell table-cell-result">RESULT</th>
-                  <th className="table-header-cell table-cell-overload">OVERLOAD %</th>
+                  <th className="table-header-cell table-cell-overload">OVER-CAP %</th>
                   <th className="table-header-cell table-cell-remark">REMARK</th>
                   <th className="table-header-cell table-cell-evaluated-by">EVALUATED BY</th>
                   <th className="table-header-cell table-cell-time">EVALUATED AT</th>
@@ -284,13 +284,13 @@ function HistoryPage({ user, onNavChange, onLogout }) {
                           <div className="equipment-model">{evaluation.equipmentModel}</div>
                         </div>
                       </td>
-                      <td className="table-cell table-cell-load">
-                        <div className="load-info">
-                          {evaluation.loadParameterValue} {evaluation.loadParameterMetric}
-                        </div>
-                      </td>
                       <td className="table-cell table-cell-capacity">
                         <div className="capacity-info">{evaluation.matchedCapacityName}</div>
+                      </td>
+                      <td className="table-cell table-cell-load">
+                        <div className="load-info">
+                          {evaluation.capacityMaxLoadDisplay || `${evaluation.loadParameterValue}${evaluation.loadParameterMetric} / —`}
+                        </div>
                       </td>
                       <td className="table-cell table-cell-result">
                         <span
